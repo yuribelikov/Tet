@@ -13,30 +13,32 @@ import lib.util.Log;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
+import java.util.Hashtable;
 
 public class Runner extends Frame implements IEventReceiver
 {
-  private CCup[] Cups = null;
-  private int PlayersQ = 1, OverQ = 0;
-  String ScoresFileName = "scores.obj", OptionsFileName = "options.obj";
-  private COptions Options = null;
+  private CCup[] cups = null;
+  private int playersQ = 1, overQ = 0;
+  String scoresFileName = "scores.obj", optionsFileName = "options.obj";
+  private COptions options = null;
 
-  private CEventListener EventListener = null;
+  private CEventListener eventListener = null;
   private MenuBar MB = null;
-  private Menu GameMenu = null;
-  private MenuItem NewGameMI = null, ScoresMI = null, OptionsMI = null, QuitMI = null;
+  private Menu gameMenu = null;
+  private MenuItem newGameMI = null, scoresMI = null, optionsMI = null, quitMI = null;
 
-  public CYesNoBox YesNoBox = null;
-  public CNewGameBox NewGameBox = null;
-  public CScoresBox ScoresBox = null;
-  public COptionsBox OptionsBox = null;
+  public CYesNoBox yesNoBox = null;
+  public CNewGameBox newGameBox = null;
+  public CScoresBox scoresBox = null;
+  public COptionsBox optionsBox = null;
+
 
   public void destroy()
   {
     try
     {
-      Cups[0].setStop();
-      Cups[1].setStop();
+      cups[0].setStop();
+      cups[1].setStop();
       dispose();
 //		System.runFinalization(); System.gc();
       System.exit(0);
@@ -47,71 +49,71 @@ public class Runner extends Frame implements IEventReceiver
     }
   }
 
-  public void dispatchEvent(CEvent _Evt)
+  public void dispatchEvent(CEvent evt)
   {
     try
     {
 // - - - - - - - - key events - - - - - - - - -
-      if (_Evt.getName().equals("KeyPressed"))
+      if (evt.getName().equals("KeyPressed"))
       {
-        KeyEvent keyEvt = (KeyEvent) _Evt.getData();
+        KeyEvent keyEvt = (KeyEvent) evt.getData();
         String keyKode = keyEvt.getKeyText(keyEvt.getKeyCode());
 
-        for (int n = 0; n < Options.Keys.length; n++)
-          for (int k = 0; k < Options.Keys[0].length; k++)
+        for (int n = 0; n < options.Keys.length; n++)
+          for (int k = 0; k < options.Keys[0].length; k++)
           {
-            if (Options.Keys[n][k].equals(keyKode))
-              Cups[n].processAction(Options.Actions[k]);
+            if (options.Keys[n][k].equals(keyKode))
+              cups[n].processAction(options.Actions[k]);
           }
 
         if (keyKode.equals("Pause"))
         {
-          Cups[0].processAction("Pause");
-          Cups[1].processAction("Pause");
+          cups[0].processAction("Pause");
+          cups[1].processAction("Pause");
         }
       }
 
 
 // - - - - - - - - menu and window actions - - - - - - - 
-      if (_Evt.getName().equals("ActionPerformed") &&
-              _Evt.getSourceName().equals("NewGame"))
+      if (evt.getName().equals("ActionPerformed") &&
+              evt.getSourceName().equals("NewGame"))
       {
-        Cups[0].processAction("NewGame");
+        cups[0].processAction("NewGame");
       }
 
-      if (_Evt.getName().equals("ActionPerformed") &&
-              _Evt.getSourceName().equals("Scores"))
+      if (evt.getName().equals("ActionPerformed") &&
+              evt.getSourceName().equals("scores"))
       {
-        ScoresBox.showBox();
+        scoresBox.showBox();
       }
 
-      if (_Evt.getName().equals("ActionPerformed") &&
-              _Evt.getSourceName().equals("Options"))
+      if (evt.getName().equals("ActionPerformed") &&
+              evt.getSourceName().equals("options"))
       {
-        COptions o = OptionsBox.showBox(Options);
+        COptions o = optionsBox.showBox(options);
         if (o != null)
         {
-          Options = o;
+          options = o;
           saveOptions();
         }
       }
 
-      if ((_Evt.getName().equals("ActionPerformed") &&
-              _Evt.getSourceName().equals("Quit")) ||
-              (_Evt.getName().equals("WindowClosing")))
+      if ((evt.getName().equals("ActionPerformed") &&
+              evt.getSourceName().equals("Quit")) ||
+              (evt.getName().equals("WindowClosing")))
       {
-        Cups[0].processAction("Quit");
-        Cups[1].processAction("Quit");
-        if (YesNoBox.showBox("�����������", "�� �������, ��� ������ ����� �� ��������� ?"))
+        cups[0].processAction("Quit");
+        cups[1].processAction("Quit");
+        if (yesNoBox.showBox("�����������", "�� �������, ��� ������ ����� �� ��������� ?"))
         {
-          Cups[0].finishGame();
-          Cups[1].finishGame();
+          cups[0].finishGame();
+          cups[1].finishGame();
           destroy();
         }
         else
         {
-          Cups[0].processAction("No");
-          Cups[1].processAction("No");
+          cups[0].processAction("No");
+          cups[1].processAction("No");
         }
       }
     }
@@ -123,7 +125,7 @@ public class Runner extends Frame implements IEventReceiver
 
   public int getPlayersQ()
   {
-    return PlayersQ;
+    return playersQ;
   }
 
   private void init(String _Args[])
@@ -137,56 +139,56 @@ public class Runner extends Frame implements IEventReceiver
       setResizable(false);
       ImageContainer.load(this);
       setIconImage(ImageContainer.getImage("icon.gif"));
-      EventListener = new CEventListener(this);
+      eventListener = new CEventListener(this);
 
-      addKeyListener((KeyListener) EventListener);
-      addWindowListener((WindowListener) EventListener);
-      addComponentListener((ComponentListener) EventListener);
+      addKeyListener((KeyListener) eventListener);
+      addWindowListener((WindowListener) eventListener);
+      addComponentListener((ComponentListener) eventListener);
 
       Font f = new Font("Dialog", 0, 12);
       MB = new MenuBar();
       setMenuBar(MB);
-      GameMenu = new Menu("����");
-      MB.add(GameMenu);
-      GameMenu.setFont(f);
+      gameMenu = new Menu("����");
+      MB.add(gameMenu);
+      gameMenu.setFont(f);
 
-      NewGameMI = new MenuItem("����� ����");
-      NewGameMI.setName("NewGame");
-      GameMenu.add(NewGameMI);
-      NewGameMI.setFont(f);
-      NewGameMI.addActionListener((ActionListener) EventListener);
-      GameMenu.addSeparator();
+      newGameMI = new MenuItem("����� ����");
+      newGameMI.setName("NewGame");
+      gameMenu.add(newGameMI);
+      newGameMI.setFont(f);
+      newGameMI.addActionListener((ActionListener) eventListener);
+      gameMenu.addSeparator();
 
-      ScoresMI = new MenuItem("��� �����");
-      ScoresMI.setName("Scores");
-      GameMenu.add(ScoresMI);
-      ScoresMI.setFont(f);
-      ScoresMI.addActionListener((ActionListener) EventListener);
-      GameMenu.addSeparator();
+      scoresMI = new MenuItem("��� �����");
+      scoresMI.setName("scores");
+      gameMenu.add(scoresMI);
+      scoresMI.setFont(f);
+      scoresMI.addActionListener((ActionListener) eventListener);
+      gameMenu.addSeparator();
 
-      OptionsMI = new MenuItem("���������");
-      OptionsMI.setName("Options");
-      GameMenu.add(OptionsMI);
-      OptionsMI.setFont(f);
-      OptionsMI.addActionListener((ActionListener) EventListener);
-      GameMenu.addSeparator();
+      optionsMI = new MenuItem("���������");
+      optionsMI.setName("options");
+      gameMenu.add(optionsMI);
+      optionsMI.setFont(f);
+      optionsMI.addActionListener((ActionListener) eventListener);
+      gameMenu.addSeparator();
 
-      QuitMI = new MenuItem("�����");
-      QuitMI.setName("Quit");
-      GameMenu.add(QuitMI);
-      QuitMI.setFont(f);
-      QuitMI.addActionListener((ActionListener) EventListener);
+      quitMI = new MenuItem("�����");
+      quitMI.setName("Quit");
+      gameMenu.add(quitMI);
+      quitMI.setFont(f);
+      quitMI.addActionListener((ActionListener) eventListener);
 
-      YesNoBox = new CYesNoBox();
-      NewGameBox = new CNewGameBox();
-      ScoresBox = new CScoresBox(ScoresFileName);
-      OptionsBox = new COptionsBox();
+      yesNoBox = new CYesNoBox();
+      newGameBox = new CNewGameBox();
+      scoresBox = new CScoresBox(scoresFileName);
+      optionsBox = new COptionsBox();
 
-      Options = new COptions();
+      options = new COptions();
       loadOptions();
-      Cups = new CCup[2];
-      Cups[0] = new CCup(this, 1);
-      Cups[1] = new CCup(this, 2);
+      cups = new CCup[2];
+      cups[0] = new CCup(this, 1);
+      cups[1] = new CCup(this, 2);
     }
     catch (Exception e)
     {
@@ -198,11 +200,11 @@ public class Runner extends Frame implements IEventReceiver
   {
     try
     {
-      File f = new File(OptionsFileName);
+      File f = new File(optionsFileName);
       if (!f.exists()) return;
 
       ObjectInputStream ois = new ObjectInputStream(new FileInputStream(f));
-      Options = (COptions) ois.readObject();
+      options = (COptions) ois.readObject();
       ois.close();
     }
     catch (Exception e)
@@ -213,17 +215,17 @@ public class Runner extends Frame implements IEventReceiver
 
   public static void main(String[] args)
   {
-    Runner Application = null;
+    Runner app = null;
 
     try
     {
-      Application = new Runner();
-      Application.init(args);
-      Application.start();
+      app = new Runner();
+      app.init(args);
+      app.start();
     }
     catch (Exception e)
     {
-      Application.destroy();
+      app.destroy();
     }
   }
 
@@ -231,16 +233,16 @@ public class Runner extends Frame implements IEventReceiver
   {
     try
     {
-      java.util.Hashtable data = NewGameBox.showBox();
+      Hashtable data = newGameBox.showBox();
       if (data == null) return;
 
-      Cups[0].finishGame();
-      Cups[1].finishGame();
+      cups[0].finishGame();
+      cups[1].finishGame();
       getGraphics().clearRect(0, 0, getSize().width, getSize().height);
-      OverQ = 0;
-      PlayersQ = (int) Integer.parseInt((String) data.get("PlayersQ"));
-      Cups[0].newGame(data);
-      if (PlayersQ > 1) Cups[1].newGame(data);
+      overQ = 0;
+      playersQ = (int) Integer.parseInt((String) data.get("PlayersQ"));
+      cups[0].newGame(data);
+      if (playersQ > 1) cups[1].newGame(data);
     }
     catch (Exception e)
     {
@@ -252,8 +254,8 @@ public class Runner extends Frame implements IEventReceiver
   {
     try
     {
-      ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(OptionsFileName, false));
-      oos.writeObject(Options);
+      ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(optionsFileName, false));
+      oos.writeObject(options);
       oos.flush();
       oos.close();
     }
@@ -284,8 +286,8 @@ public class Runner extends Frame implements IEventReceiver
     {
       showSelf();
 
-      Cups[0].start();
-      Cups[1].start();
+      cups[0].start();
+      cups[1].start();
     }
     catch (Exception e)
     {
@@ -294,12 +296,12 @@ public class Runner extends Frame implements IEventReceiver
     }
   }
 
-  public void updateScores(String _PlayerName, int _Score, boolean _IsShowScoreBox)
+  public void updateScores(String playerName, int score, boolean isShowScoreBox)
   {
     try
     {
       CScoreTable scoreTable = null;
-      File f = new File(ScoresFileName);
+      File f = new File(scoresFileName);
       if (f.exists())
       {
         ObjectInputStream ois = new ObjectInputStream(new FileInputStream(f));
@@ -308,19 +310,19 @@ public class Runner extends Frame implements IEventReceiver
       }
       else scoreTable = new CScoreTable();
 
-      scoreTable.newRecord(_PlayerName, _Score);
+      scoreTable.newRecord(playerName, score);
 
-      ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(ScoresFileName, false));
+      ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(scoresFileName, false));
       oos.writeObject(scoreTable);
       oos.flush();
       oos.close();
 
-      OverQ++;
-      if (_IsShowScoreBox && OverQ == PlayersQ) ScoresBox.showBox();
+      overQ++;
+      if (isShowScoreBox && overQ == playersQ) scoresBox.showBox();
     }
     catch (Exception e)
     {
-      Log.err(getClass().getName() + ".updateScores() error : " + e);
+      e.printStackTrace();
     }
   }
 }

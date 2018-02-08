@@ -2,41 +2,44 @@ package bel.tetris.game;
 
 public class CScoreTable implements java.io.Serializable
 {
- public int Q=10;
- public String[] PlayerNames=null;
- public int[] Scores=null;
-public CScoreTable()
-{
-	PlayerNames=new String[Q];
-	Scores=new int[Q];
+  public int size = 10;
+  public String[] playerNames = null;
+  public int[] scores = null;
 
-	for (int n=0; n<Q; n++)
-	{
-		PlayerNames[n]="Игрок "+(n+1);
-		Scores[n]=10000*(Q-n);
-	}
-}
-public void newRecord(String _PlayerName, int _Score)
-{
-	try
-	{
-		int n=0;
-		while (n<Q && _Score<Scores[n]) n++;
+  public CScoreTable()
+  {
+    playerNames = new String[size];
+    scores = new int[size];
 
-		if (n>=Q) return;
+    for (int n = 0; n < size; n++)
+    {
+      playerNames[n] = "пїЅпїЅпїЅпїЅпїЅ " + (n + 1);
+      scores[n] = 10000 * (size - n);
+    }
+  }
 
-		String[] playerNames=new String[Q];
-		int[] scores=new int[Q];
-		System.arraycopy(PlayerNames, 0, playerNames, 0, Q);
-		System.arraycopy(playerNames, n, PlayerNames, n+1, Q-n-1);
-		System.arraycopy(Scores, 0, scores, 0, Q);
-		System.arraycopy(scores, n, Scores, n+1, Q-n-1);
+  public void newRecord(String _PlayerName, int _Score)
+  {
+    try
+    {
+      int n = 0;
+      while (n < size && _Score < scores[n]) n++;
 
-		PlayerNames[n]=_PlayerName; Scores[n]=_Score;
-	}
-	catch(Exception e)
-	{
-		lib.util.Log.err(getClass().getName()+".newRecord() error : "+e);
-	}
-}
+      if (n >= size) return;
+
+      String[] playerNames = new String[size];
+      int[] scores = new int[size];
+      System.arraycopy(this.playerNames, 0, playerNames, 0, size);
+      System.arraycopy(playerNames, n, this.playerNames, n + 1, size - n - 1);
+      System.arraycopy(this.scores, 0, scores, 0, size);
+      System.arraycopy(scores, n, this.scores, n + 1, size - n - 1);
+
+      this.playerNames[n] = _PlayerName;
+      this.scores[n] = _Score;
+    }
+    catch (Exception e)
+    {
+      lib.util.Log.err(getClass().getName() + ".newRecord() error : " + e);
+    }
+  }
 }

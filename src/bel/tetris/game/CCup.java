@@ -360,8 +360,6 @@ public class CCup extends Thread
   {
     try
     {
-      if (Runner.getPlayersQ() == 1 && PlayerN == 2) return;
-
       Dimension scrSize = Runner.getSize();
 
       Graphics g = BgImage.getGraphics();
@@ -405,8 +403,7 @@ public class CCup extends Thread
 
       g = Runner.getGraphics();
       int x = 0;
-      if (Runner.getPlayersQ() == 1) x = scrSize.width / 4;
-      else x = (PlayerN - 1) * scrSize.width / 2;
+      x = scrSize.width / 4;
       synchronized (g)
       {
         g.drawImage(BgImage, x, 0, Runner);

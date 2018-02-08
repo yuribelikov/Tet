@@ -1,10 +1,12 @@
 package bel.tetris.dialog;
 
+import bel.tetris.container.ImageContainer;
+import lib.gcl.CGButton;
+import lib.gcl.CInfoArea;
+import lib.util.Log;
+
 import java.awt.*;
-import java.awt.event.*;
-import lib.gcl.*;
-import lib.util.*;
-import bel.tetris.container.*;
+import java.awt.event.ActionListener;
 
 public class CYesNoBox extends CBox
 {
@@ -26,10 +28,10 @@ protected void create()
 		InfoArea.setBounds(10, 30, W-20, H-75); InfoArea.setFont(new Font("Dialog", 0, 14));
 		InfoArea.setAlign(CInfoArea.CENTER);
 		
-		OkButton=new CGButton(this, ImageContainer.getImage("okButton.gif"), "Да"); add(OkButton);
+		OkButton=new CGButton(this, ImageContainer.getImage("okButton.gif"), "пїЅпїЅ"); add(OkButton);
 		OkButton.setName("OkButton"); OkButton.setActionListener((ActionListener)EventListener);
 		OkButton.setBounds(W-75, H-40, 30, 30); OkButton.setBorder(false); OkButton.setPopUpMode(true);
-		CancelButton=new CGButton(this, ImageContainer.getImage("cancelButton.gif"), "Нет"); add(CancelButton);
+		CancelButton=new CGButton(this, ImageContainer.getImage("cancelButton.gif"), "пїЅпїЅпїЅ"); add(CancelButton);
 		CancelButton.setName("CancelButton"); CancelButton.setActionListener((ActionListener)EventListener);
 		CancelButton.setBounds(W-40, H-40, 30, 30); CancelButton.setBorder(false); CancelButton.setPopUpMode(true);
 	}

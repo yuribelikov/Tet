@@ -1,11 +1,13 @@
 package bel.tetris.editor;
 
+import bel.tetris.container.ImageContainer;
+import bel.tetris.event.CEvent;
+import bel.tetris.event.CEventListener;
+import bel.tetris.event.IEventReceiver;
+import lib.util.Log;
+
 import java.awt.*;
 import java.awt.event.*;
-import lib.util.*;
-import lib.gcl.*;
-import bel.tetris.event.*;
-import bel.tetris.container.*;
 
 public class Runner extends Frame implements IEventReceiver
 {
@@ -79,7 +81,7 @@ private void init(String _Args[])
 	{
 //Log.LogEnabled=true;
 		setBackground(new Color(210, 210, 210));
-		setTitle("Редактор уровней"); setLayout(null); setResizable(false);
+		setTitle("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ"); setLayout(null); setResizable(false);
 		ImageContainer.load(this);
 		setIconImage(ImageContainer.getImage("icon.gif"));
 		EventListener=new CEventListener(this);
@@ -91,9 +93,9 @@ private void init(String _Args[])
 		
 		Font f=new Font("Dialog", 0, 12);
 		MB=new MenuBar(); setMenuBar(MB);
-		FileMenu=new Menu("Файл"); MB.add(FileMenu); FileMenu.setFont(f);
+		FileMenu=new Menu("пїЅпїЅпїЅпїЅ"); MB.add(FileMenu); FileMenu.setFont(f);
 		
-		SelectMenu=new Menu("Выбор уровня");
+		SelectMenu=new Menu("пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ");
 		FileMenu.add(SelectMenu); SelectMenu.setFont(f);
 
 		for (int n=0; n<10; n++)
@@ -108,17 +110,17 @@ private void init(String _Args[])
 			}
 		}
 		
-		SaveMI=new MenuItem("Сохранить"); SaveMI.setName("SaveLevel");
+		SaveMI=new MenuItem("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"); SaveMI.setName("SaveLevel");
 		FileMenu.add(SaveMI); SaveMI.setFont(f); SaveMI.setEnabled(false);
 		SaveMI.addActionListener((ActionListener)EventListener);
 		FileMenu.addSeparator();
 		
-		ClearMI=new MenuItem("Очистить"); ClearMI.setName("ClearLevel");
+		ClearMI=new MenuItem("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"); ClearMI.setName("ClearLevel");
 		FileMenu.add(ClearMI); ClearMI.setFont(f); ClearMI.setEnabled(false);
 		ClearMI.addActionListener((ActionListener)EventListener);
 		FileMenu.addSeparator();
 		
-		QuitMI=new MenuItem("Выход"); QuitMI.setName("Quit");
+		QuitMI=new MenuItem("пїЅпїЅпїЅпїЅпїЅ"); QuitMI.setName("Quit");
 		FileMenu.add(QuitMI); QuitMI.setFont(f);
 		QuitMI.addActionListener((ActionListener)EventListener);
 

@@ -1,12 +1,16 @@
 package bel.tetris.dialog;
 
+import bel.tetris.container.ImageContainer;
+import bel.tetris.event.CEvent;
+import bel.tetris.game.COptions;
+import lib.gcl.CButton;
+import lib.gcl.CGButton;
+import lib.util.Log;
+
 import java.awt.*;
-import java.awt.event.*;
-import lib.gcl.*;
-import lib.util.*;
-import bel.tetris.event.*;
-import bel.tetris.container.*;
-import bel.tetris.game.*;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 
 public class COptionsBox extends CBox
 {
@@ -26,41 +30,41 @@ protected void create()
 		W=300; H=220;
 		super.create();
 
-		setTitle("Настройки");
+		setTitle("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ");
 		
-		Label l=new Label("Игрок 1:"); add(l);
+		Label l=new Label("пїЅпїЅпїЅпїЅпїЅ 1:"); add(l);
 		l.setBounds(120, 35, 80, 20);
 		l.addKeyListener((KeyListener)EventListener);
-		l=new Label("Игрок 2:"); add(l);
+		l=new Label("пїЅпїЅпїЅпїЅпїЅ 2:"); add(l);
 		l.setBounds(210, 35, 80, 20);
-		l=new Label("Влево :"); add(l);
+		l=new Label("пїЅпїЅпїЅпїЅпїЅ :"); add(l);
 		l.setBounds(10, 65, 90, 20);
-		l=new Label("Вправо :"); add(l);
+		l=new Label("пїЅпїЅпїЅпїЅпїЅпїЅ :"); add(l);
 		l.setBounds(10, 90, 90, 20);
-		l=new Label("Поворот :"); add(l);
+		l=new Label("пїЅпїЅпїЅпїЅпїЅпїЅпїЅ :"); add(l);
 		l.setBounds(10, 115, 90, 20);
-		l=new Label("Бросить :"); add(l);
+		l=new Label("пїЅпїЅпїЅпїЅпїЅпїЅпїЅ :"); add(l);
 		l.setBounds(10, 140, 90, 20);
 
 		Buttons=new CButton[2][4];
 		for (int n=0; n<Buttons.length; n++)
 		for (int k=0; k<Buttons[0].length; k++)
 		{
-			Buttons[n][k]=new CButton(this, "", "Нажмите чтобы сменить       "); add(Buttons[n][k]);
+			Buttons[n][k]=new CButton(this, "", "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ       "); add(Buttons[n][k]);
 			Buttons[n][k].setBounds(120+90*n, 64+25*k, 50, 22);
 			Buttons[n][k].setActionListener((ActionListener)EventListener);
 			Buttons[n][k].setForeground(Color.blue);
 			Buttons[n][k].setRadioMode(true); Buttons[n][k].setBorder(false);
 		}
 
-		InterchangeButton=new CGButton(this, ImageContainer.getImage("interchange.gif"), "Поменять местами      "); add(InterchangeButton);
+		InterchangeButton=new CGButton(this, ImageContainer.getImage("interchange.gif"), "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ      "); add(InterchangeButton);
 		InterchangeButton.setName("InterchangeButton"); InterchangeButton.setActionListener((ActionListener)EventListener);
 		InterchangeButton.setBounds(177, 99, 24, 24); InterchangeButton.setBorder(false); InterchangeButton.setPopUpMode(true);
 
-		OkButton=new CGButton(this, ImageContainer.getImage("okButton.gif"), "Да"); add(OkButton);
+		OkButton=new CGButton(this, ImageContainer.getImage("okButton.gif"), "пїЅпїЅ"); add(OkButton);
 		OkButton.setName("OkButton"); OkButton.setActionListener((ActionListener)EventListener);
 		OkButton.setBounds(W-75, H-40, 30, 30); OkButton.setBorder(false); OkButton.setPopUpMode(true);
-		CancelButton=new CGButton(this, ImageContainer.getImage("cancelButton.gif"), "Отмена  "); add(CancelButton);
+		CancelButton=new CGButton(this, ImageContainer.getImage("cancelButton.gif"), "пїЅпїЅпїЅпїЅпїЅпїЅ  "); add(CancelButton);
 		CancelButton.setName("CancelButton"); CancelButton.setActionListener((ActionListener)EventListener);
 		CancelButton.setBounds(W-40, H-40, 30, 30); CancelButton.setBorder(false); CancelButton.setPopUpMode(true);
 
@@ -98,13 +102,13 @@ public void dispatchEvent(CEvent _Evt)
 				{
 					if (Buttons[n][k].getState()==0)
 					{
-						setTitle("Нажмите клавишу");
+						setTitle("пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ");
 						Buttons[n][k].setText("?");
 						setControlEnabled(false, Buttons[n][k]);
 					}
 					else
 					{
-						setTitle("Настройки");
+						setTitle("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ");
 						Buttons[n][k].setText(Options.Keys[n][k]);
 						setControlEnabled(true, Buttons[n][k]);
 					}
@@ -121,7 +125,7 @@ public void dispatchEvent(CEvent _Evt)
 			for (int k=0; k<Buttons[0].length; k++)
 				if (Buttons[n][k].getState()==1)
 				{
-					setTitle("Настройки");
+					setTitle("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ");
 					Buttons[n][k].setText(keyKode);
 					Options.Keys[n][k]=keyKode;
 					Buttons[n][k].setState(0);

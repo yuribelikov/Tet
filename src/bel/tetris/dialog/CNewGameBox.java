@@ -1,12 +1,14 @@
 package bel.tetris.dialog;
 
+import bel.tetris.container.ImageContainer;
+import bel.tetris.event.CEvent;
+import lib.gcl.CGButton;
+import lib.util.Log;
+
 import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
-import lib.gcl.*;
-import lib.util.*;
-import bel.tetris.event.*;
-import bel.tetris.container.*;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemListener;
+import java.util.Hashtable;
 
 public class CNewGameBox extends CBox
 {
@@ -29,48 +31,48 @@ protected void create()
 		W=400; H=250;
 		super.create();
 
-		setTitle("Новая Игра");
+		setTitle("пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ");
 		Data=new Hashtable();
 
-		Label l=new Label("Тип игры :"); add(l);
+		Label l=new Label("пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ :"); add(l);
 		l.setBounds(10, 35, 210, 20);
 		PlayersQChoice=new Choice(); add(PlayersQChoice);
 		PlayersQChoice.setBounds(220, 35, W-230, 20);
-		PlayersQChoice.addItem("Один игрок");
-		PlayersQChoice.addItem("Два игрока");
+		PlayersQChoice.addItem("пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ");
+		PlayersQChoice.addItem("пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ");
 		PlayersQChoice.select(0); PlayersQChoice.addItemListener((ItemListener)EventListener);
 
 		PlayerNamesLabels=new Label[2]; PlayerNames=new TextField[2];
-		PlayerNamesLabels[0]=new Label("Имя игрока :"); add(PlayerNamesLabels[0]);
+		PlayerNamesLabels[0]=new Label("пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ :"); add(PlayerNamesLabels[0]);
 		PlayerNamesLabels[0].setBounds(10, 65, 210, 20);
-		PlayerNames[0]=new TextField("Игрок 1"); add(PlayerNames[0]);
+		PlayerNames[0]=new TextField("пїЅпїЅпїЅпїЅпїЅ 1"); add(PlayerNames[0]);
 		PlayerNames[0].setBounds(220, 65, W-230, 20);
-		PlayerNamesLabels[1]=new Label("Имя второго игрока :"); add(PlayerNamesLabels[1]);
+		PlayerNamesLabels[1]=new Label("пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ :"); add(PlayerNamesLabels[1]);
 		PlayerNamesLabels[1].setBounds(10, 95, 210, 20); PlayerNamesLabels[1].setVisible(false);
-		PlayerNames[1]=new TextField("Игрок 2"); add(PlayerNames[1]);
+		PlayerNames[1]=new TextField("пїЅпїЅпїЅпїЅпїЅ 2"); add(PlayerNames[1]);
 		PlayerNames[1].setBounds(220, 95, W-230, 20); PlayerNames[1].setVisible(false);
 		
-		l=new Label("Скорость :"); add(l);
+		l=new Label("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ :"); add(l);
 		l.setBounds(10, 125, 210, 20);
 		SpeedChoice=new Choice(); add(SpeedChoice);
 		SpeedChoice.setBounds(220, 125, W-230, 20);
-		SpeedChoice.addItem("Усыпляющая");
-		SpeedChoice.addItem("Медленная");
-		SpeedChoice.addItem("Нормальная");
-		SpeedChoice.addItem("Быстрая");
-		SpeedChoice.addItem("Сумашедшая");
+		SpeedChoice.addItem("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ");
+		SpeedChoice.addItem("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ");
+		SpeedChoice.addItem("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ");
+		SpeedChoice.addItem("пїЅпїЅпїЅпїЅпїЅпїЅпїЅ");
+		SpeedChoice.addItem("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ");
 		SpeedChoice.select(2);
 
-		l=new Label("Показ следующей фигуры :"); add(l);
+		l=new Label("пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ :"); add(l);
 		l.setBounds(10, 155, 210, 20);
 		ShowNextFigureCheckbox=new Checkbox(); add(ShowNextFigureCheckbox);
 		ShowNextFigureCheckbox.setBounds(220, 156, W-230, 18);
 		ShowNextFigureCheckbox.setState(true);
 
-		OkButton=new CGButton(this, ImageContainer.getImage("okButton.gif"), "Начать  "); add(OkButton);
+		OkButton=new CGButton(this, ImageContainer.getImage("okButton.gif"), "пїЅпїЅпїЅпїЅпїЅпїЅ  "); add(OkButton);
 		OkButton.setName("OkButton"); OkButton.setActionListener((ActionListener)EventListener);
 		OkButton.setBounds(W-75, H-40, 30, 30); OkButton.setBorder(false); OkButton.setPopUpMode(true);
-		CancelButton=new CGButton(this, ImageContainer.getImage("cancelButton.gif"), "Отмена  "); add(CancelButton);
+		CancelButton=new CGButton(this, ImageContainer.getImage("cancelButton.gif"), "пїЅпїЅпїЅпїЅпїЅпїЅ  "); add(CancelButton);
 		CancelButton.setName("CancelButton"); CancelButton.setActionListener((ActionListener)EventListener);
 		CancelButton.setBounds(W-40, H-40, 30, 30); CancelButton.setBorder(false); CancelButton.setPopUpMode(true);
 	}
@@ -88,9 +90,9 @@ public void dispatchEvent(CEvent _Evt)
 		if (_Evt.getName().equals("ItemStateChanged") && _Evt.getSource()==PlayersQChoice)
 		{
 			if (PlayersQChoice.getSelectedIndex()==0)
-				PlayerNamesLabels[0].setText("Имя игрока :");
+				PlayerNamesLabels[0].setText("пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ :");
 			else
-				PlayerNamesLabels[0].setText("Имя первого игрока :");
+				PlayerNamesLabels[0].setText("пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ :");
 			PlayerNamesLabels[1].setVisible(PlayersQChoice.getSelectedIndex()==1);
 			PlayerNames[1].setVisible(PlayersQChoice.getSelectedIndex()==1);
 		}

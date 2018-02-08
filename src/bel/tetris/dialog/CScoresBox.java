@@ -1,12 +1,15 @@
 package bel.tetris.dialog;
 
+import bel.tetris.container.ImageContainer;
+import bel.tetris.game.CScoreTable;
+import lib.gcl.CGButton;
+import lib.util.Log;
+
 import java.awt.*;
-import java.awt.event.*;
-import java.io.*;
-import lib.gcl.*;
-import lib.util.*;
-import bel.tetris.container.*;
-import bel.tetris.game.*;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.ObjectInputStream;
 
 public class CScoresBox extends CBox
 {
@@ -27,10 +30,10 @@ protected void create()
  	{
 		W=500; H=400;
 	 	super.create();
-		setTitle("Зал Славы");
+		setTitle("пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ");
 		ScoreFont=new Font("Dialog", 1, 20);
 			
-		OkButton=new CGButton(this, ImageContainer.getImage("okButton.gif"), "Закрыть "); add(OkButton);
+		OkButton=new CGButton(this, ImageContainer.getImage("okButton.gif"), "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ "); add(OkButton);
 		OkButton.setName("OkButton"); OkButton.setActionListener((ActionListener)EventListener);
 		OkButton.setBounds(W-40, H-40, 30, 30); OkButton.setBorder(false); OkButton.setPopUpMode(true);
 	}

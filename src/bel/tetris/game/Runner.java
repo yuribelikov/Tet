@@ -1,6 +1,5 @@
 package bel.tetris.game;
 
-import bel.tetris.container.ImageContainer;
 import bel.tetris.event.CEvent;
 import bel.tetris.event.CEventListener;
 import bel.tetris.event.IEventReceiver;
@@ -13,11 +12,6 @@ import java.util.Hashtable;
 public class Runner extends Frame implements IEventReceiver
 {
   private CCup cup = null;
-
-  private CEventListener eventListener = null;
-  private MenuBar MB = null;
-  private Menu gameMenu = null;
-  private MenuItem newGameMI = null;
 
 
   public void destroy()
@@ -73,31 +67,28 @@ public class Runner extends Frame implements IEventReceiver
     }
   }
 
-  private void init(String _Args[])
+  private void init(String args[])
   {
     try
     {
-//Log.LogEnabled=true;
       setBackground(Color.black);
       setTitle("Tetris");
       setLayout(null);
       setResizable(false);
-      ImageContainer.load(this);
-      setIconImage(ImageContainer.getImage("icon.gif"));
-      eventListener = new CEventListener(this);
+      CEventListener eventListener = new CEventListener(this);
 
       addKeyListener(eventListener);
       addWindowListener(eventListener);
       addComponentListener(eventListener);
 
       Font f = new Font("Dialog", 0, 12);
-      MB = new MenuBar();
+      MenuBar MB = new MenuBar();
       setMenuBar(MB);
-      gameMenu = new Menu("Game");
+      Menu gameMenu = new Menu("Game");
       MB.add(gameMenu);
       gameMenu.setFont(f);
 
-      newGameMI = new MenuItem("New Game");
+      MenuItem newGameMI = new MenuItem("New Game");
       newGameMI.setName("NewGame");
       gameMenu.add(newGameMI);
       newGameMI.setFont(f);
@@ -115,7 +106,6 @@ public class Runner extends Frame implements IEventReceiver
   public static void main(String[] args)
   {
     Runner app = new Runner();
-    ;
 
     try
     {

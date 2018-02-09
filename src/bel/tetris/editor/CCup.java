@@ -8,7 +8,7 @@ import java.io.*;
 
 public class CCup extends Thread
 {
-  private Runner Runner = null;
+  private Editor Runner = null;
 
   private int W = 10, H = 20;    // cup width and height
   private int[][] Contents = null;
@@ -25,7 +25,7 @@ public class CCup extends Thread
   private String Task = null;
   private boolean IsAlive = true;
 
-  public CCup(Runner _Runner)
+  public CCup(Editor _Runner)
   {
     super();
 

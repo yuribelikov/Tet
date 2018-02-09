@@ -1,6 +1,5 @@
 package bel.tetris.editor;
 
-import bel.tetris.container.ImageContainer;
 import bel.tetris.event.CEvent;
 import bel.tetris.event.CEventListener;
 import bel.tetris.event.IEventReceiver;
@@ -9,7 +8,7 @@ import lib.util.Log;
 import java.awt.*;
 import java.awt.event.*;
 
-public class Runner extends Frame implements IEventReceiver
+public class Editor extends Frame implements IEventReceiver
 {
   private CCup Cup = null;
 
@@ -84,8 +83,6 @@ public class Runner extends Frame implements IEventReceiver
       setTitle("�������� �������");
       setLayout(null);
       setResizable(false);
-      ImageContainer.load(this);
-      setIconImage(ImageContainer.getImage("icon.gif"));
       EventListener = new CEventListener(this);
 
       addKeyListener((KeyListener) EventListener);
@@ -152,11 +149,11 @@ public class Runner extends Frame implements IEventReceiver
 
   public static void main(String[] args)
   {
-    Runner Application = null;
+    Editor Application = null;
 
     try
     {
-      Application = new Runner();
+      Application = new Editor();
       Application.init(args);
       Application.start();
     }

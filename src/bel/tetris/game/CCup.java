@@ -9,12 +9,12 @@ import java.io.ObjectInputStream;
 
 public class CCup extends Thread
 {
-  private Tetris Runner = null;
+  private Tetris tetris = null;
 
   private int W = 10, H = 20, F = 4;    // cup width and height, figure width/height
   private int[][] Contents = null;
   private String FigureTypes[] = {"LStair", "RStair", "Podium", "LCorner", "RCorner", "Square", "Line"};
-  private CFigure CurrentFigure = null, NextFigure = null;
+  private Figure CurrentFigure = null, NextFigure = null;
   private int[] PrevFigureTypes = null;
   private int PlayerN = 1, Speed = 0, Level = 0, Score = 0, Prize = 0;
   private boolean IsNextFigureShowed = false;
@@ -33,12 +33,12 @@ public class CCup extends Thread
   private int DropDelay = 10, MergeDelay = 500;
   private boolean IsAlive = true, IsShouldBeRepainted = false;
 
-  public CCup(Tetris _Runner, int _PlayerN)
+
+  CCup(Tetris tetris)
   {
     super();
 
-    Runner = _Runner;
-    PlayerN = _PlayerN;
+    this.tetris = tetris;
     PrevFigureTypes = new int[2];
     StartLocation = new Point(3, -2);
     setState("Idle");
@@ -61,12 +61,12 @@ public class CCup extends Thread
   {
     try
     {
-      for (int y = 0; y < CurrentFigure.getContents().length; y++)
-        for (int x = 0; x < CurrentFigure.getContents()[0].length; x++)
+      for (int y = 0; y < CurrentFigure.getContentsForCurrRotation().length; y++)
+        for (int x = 0; x < CurrentFigure.getContentsForCurrRotation()[0].length; x++)
         {
-          if (!CurrentFigure.getContents()[y][x]) continue;
-          int cx = CurrentFigure.Location.x + x;
-          int cy = CurrentFigure.Location.y + y;
+          if (!CurrentFigure.getContentsForCurrRotation()[y][x]) continue;
+          int cx = CurrentFigure.location.x + x;
+          int cy = CurrentFigure.location.y + y;
           if (cx < 0 || cx >= W) return false;
           if (cy >= H) return false;
           if (cy < 0) continue;
@@ -87,12 +87,12 @@ public class CCup extends Thread
   {
     try
     {
-      for (int y = 0; y < CurrentFigure.getContents().length; y++)
-        for (int x = 0; x < CurrentFigure.getContents()[0].length; x++)
+      for (int y = 0; y < CurrentFigure.getContentsForCurrRotation().length; y++)
+        for (int x = 0; x < CurrentFigure.getContentsForCurrRotation()[0].length; x++)
         {
-          if (!CurrentFigure.getContents()[y][x]) continue;
-          int cx = CurrentFigure.Location.x + x;
-          int cy = CurrentFigure.Location.y + y;
+          if (!CurrentFigure.getContentsForCurrRotation()[y][x]) continue;
+          int cx = CurrentFigure.location.x + x;
+          int cy = CurrentFigure.location.y + y;
           if (cx < 0 || cx >= W) continue;
           if (cy < 0 || cy >= H) continue;
           Contents[cy][cx] = 1;
@@ -146,17 +146,17 @@ public class CCup extends Thread
   private void cfNext()
   {
     CurrentFigure = NextFigure;
-    CurrentFigure.Location.x = StartLocation.x;
-    CurrentFigure.Location.y = StartLocation.y;
+    CurrentFigure.location.x = StartLocation.x;
+    CurrentFigure.location.y = StartLocation.y;
     NextFigure = generateFigure();
   }
 
   public void finishGame()
   {
-    Runner.updateScores(PlayerName, Score, false);
+    tetris.updateScores(PlayerName, Score, false);
   }
 
-  private CFigure generateFigure()
+  private Figure generateFigure()
   {
     try
     {
@@ -166,119 +166,119 @@ public class CCup extends Thread
 
       PrevFigureTypes[0] = PrevFigureTypes[1];
       PrevFigureTypes[1] = type;
-      CFigure figure = new CFigure();
-      figure.Type = FigureTypes[type];
-//figure.Type="Line";
-      figure.Location = new Point();
-      figure.Contents = new boolean[4][F][F];
+      Figure figure = new Figure();
+      figure.type = FigureTypes[type];
+//figure.type="Line";
+      figure.location = new Point();
+      figure.contents = new boolean[4][F][F];
 
-      if (figure.Type.equals("LStair"))
+      if (figure.type.equals("LStair"))
       {
-        figure.Contents[0][1][2] = figure.Contents[0][1][3] =                //  xx
-                figure.Contents[0][2][1] = figure.Contents[0][2][2] = true;            // xx
+        figure.contents[0][1][2] = figure.contents[0][1][3] =                //  xx
+                figure.contents[0][2][1] = figure.contents[0][2][2] = true;            // xx
 
-        figure.Contents[1][1][1] =                                          // x
-                figure.Contents[1][2][1] = figure.Contents[1][2][2] =                // xx
-                        figure.Contents[1][3][2] = true;                                    //  x
+        figure.contents[1][1][1] =                                          // x
+                figure.contents[1][2][1] = figure.contents[1][2][2] =                // xx
+                        figure.contents[1][3][2] = true;                                    //  x
 
-        figure.Contents[2][1][2] = figure.Contents[2][1][3] =                //  xx
-                figure.Contents[2][2][1] = figure.Contents[2][2][2] = true;            // xx
+        figure.contents[2][1][2] = figure.contents[2][1][3] =                //  xx
+                figure.contents[2][2][1] = figure.contents[2][2][2] = true;            // xx
 
-        figure.Contents[3][1][1] =                                          // x
-                figure.Contents[3][2][1] = figure.Contents[3][2][2] =                // xx
-                        figure.Contents[3][3][2] = true;                                    //  x
+        figure.contents[3][1][1] =                                          // x
+                figure.contents[3][2][1] = figure.contents[3][2][2] =                // xx
+                        figure.contents[3][3][2] = true;                                    //  x
       }
-      else if (figure.Type.equals("RStair"))
+      else if (figure.type.equals("RStair"))
       {
-        figure.Contents[0][1][0] = figure.Contents[0][1][1] =                // xx
-                figure.Contents[0][2][1] = figure.Contents[0][2][2] = true;            //  xx
+        figure.contents[0][1][0] = figure.contents[0][1][1] =                // xx
+                figure.contents[0][2][1] = figure.contents[0][2][2] = true;            //  xx
 
-        figure.Contents[1][1][2] =                                          //  x
-                figure.Contents[1][2][1] = figure.Contents[1][2][2] =                // xx
-                        figure.Contents[1][3][1] = true;                                    // x
+        figure.contents[1][1][2] =                                          //  x
+                figure.contents[1][2][1] = figure.contents[1][2][2] =                // xx
+                        figure.contents[1][3][1] = true;                                    // x
 
-        figure.Contents[2][1][0] = figure.Contents[2][1][1] =                // xx
-                figure.Contents[2][2][1] = figure.Contents[2][2][2] = true;            //  xx
+        figure.contents[2][1][0] = figure.contents[2][1][1] =                // xx
+                figure.contents[2][2][1] = figure.contents[2][2][2] = true;            //  xx
 
-        figure.Contents[3][1][2] =                                          //  x
-                figure.Contents[3][2][1] = figure.Contents[3][2][2] =                // xx
-                        figure.Contents[3][3][1] = true;                                    // x
-      }
-
-      else if (figure.Type.equals("Podium"))
-      {
-        figure.Contents[0][1][2] =                                          //   x
-                figure.Contents[0][2][1] = figure.Contents[0][2][2] =                //  xx
-                        figure.Contents[0][3][2] = true;                                    //   x
-
-        figure.Contents[1][1][1] =                                                              //  x
-                figure.Contents[1][2][0] = figure.Contents[1][2][1] = figure.Contents[1][2][2] = true;      // xxx
-
-        figure.Contents[2][1][1] =                                          //  x
-                figure.Contents[2][2][1] = figure.Contents[2][2][2] =                //  xx
-                        figure.Contents[2][3][1] = true;                                    //  x
-
-        figure.Contents[3][1][0] = figure.Contents[3][1][1] = figure.Contents[3][1][2] =            // xxx
-                figure.Contents[3][2][1] = true;                                                        //  x
+        figure.contents[3][1][2] =                                          //  x
+                figure.contents[3][2][1] = figure.contents[3][2][2] =                // xx
+                        figure.contents[3][3][1] = true;                                    // x
       }
 
-      else if (figure.Type.equals("LCorner"))
+      else if (figure.type.equals("Podium"))
       {
-        figure.Contents[0][1][1] = figure.Contents[0][1][2] =                //  xx
-                figure.Contents[0][2][2] =                                          //   x
-                        figure.Contents[0][3][2] = true;                                    //   x
+        figure.contents[0][1][2] =                                          //   x
+                figure.contents[0][2][1] = figure.contents[0][2][2] =                //  xx
+                        figure.contents[0][3][2] = true;                                    //   x
 
-        figure.Contents[1][1][2] =                                                              //   x
-                figure.Contents[1][2][0] = figure.Contents[1][2][1] = figure.Contents[1][2][2] = true;      // xxx
+        figure.contents[1][1][1] =                                                              //  x
+                figure.contents[1][2][0] = figure.contents[1][2][1] = figure.contents[1][2][2] = true;      // xxx
 
-        figure.Contents[2][1][1] =                                          //  x
-                figure.Contents[2][2][1] =                                          //  x
-                        figure.Contents[2][3][1] = figure.Contents[2][3][2] = true;            //  xx
+        figure.contents[2][1][1] =                                          //  x
+                figure.contents[2][2][1] = figure.contents[2][2][2] =                //  xx
+                        figure.contents[2][3][1] = true;                                    //  x
 
-        figure.Contents[3][1][0] = figure.Contents[3][1][1] = figure.Contents[3][1][2] =            // xxx
-                figure.Contents[3][2][0] = true;                                                        // x
-      }
-      else if (figure.Type.equals("RCorner"))
-      {
-        figure.Contents[0][1][1] = figure.Contents[0][1][2] =                //  xx
-                figure.Contents[0][2][1] =                                          //  x
-                        figure.Contents[0][3][1] = true;                                    //  x
-
-        figure.Contents[1][1][0] = figure.Contents[1][1][1] = figure.Contents[1][1][2] =            // xxx
-                figure.Contents[1][2][2] = true;                                                        //   x
-
-        figure.Contents[2][1][2] =                                          //   x
-                figure.Contents[2][2][2] =                                          //   x
-                        figure.Contents[2][3][1] = figure.Contents[2][3][2] = true;            //  xx
-
-        figure.Contents[3][1][0] =                                                              // x
-                figure.Contents[3][2][0] = figure.Contents[3][2][1] = figure.Contents[3][2][2] = true;      // xxx
+        figure.contents[3][1][0] = figure.contents[3][1][1] = figure.contents[3][1][2] =            // xxx
+                figure.contents[3][2][1] = true;                                                        //  x
       }
 
-      else if (figure.Type.equals("Square"))
+      else if (figure.type.equals("LCorner"))
+      {
+        figure.contents[0][1][1] = figure.contents[0][1][2] =                //  xx
+                figure.contents[0][2][2] =                                          //   x
+                        figure.contents[0][3][2] = true;                                    //   x
+
+        figure.contents[1][1][2] =                                                              //   x
+                figure.contents[1][2][0] = figure.contents[1][2][1] = figure.contents[1][2][2] = true;      // xxx
+
+        figure.contents[2][1][1] =                                          //  x
+                figure.contents[2][2][1] =                                          //  x
+                        figure.contents[2][3][1] = figure.contents[2][3][2] = true;            //  xx
+
+        figure.contents[3][1][0] = figure.contents[3][1][1] = figure.contents[3][1][2] =            // xxx
+                figure.contents[3][2][0] = true;                                                        // x
+      }
+      else if (figure.type.equals("RCorner"))
+      {
+        figure.contents[0][1][1] = figure.contents[0][1][2] =                //  xx
+                figure.contents[0][2][1] =                                          //  x
+                        figure.contents[0][3][1] = true;                                    //  x
+
+        figure.contents[1][1][0] = figure.contents[1][1][1] = figure.contents[1][1][2] =            // xxx
+                figure.contents[1][2][2] = true;                                                        //   x
+
+        figure.contents[2][1][2] =                                          //   x
+                figure.contents[2][2][2] =                                          //   x
+                        figure.contents[2][3][1] = figure.contents[2][3][2] = true;            //  xx
+
+        figure.contents[3][1][0] =                                                              // x
+                figure.contents[3][2][0] = figure.contents[3][2][1] = figure.contents[3][2][2] = true;      // xxx
+      }
+
+      else if (figure.type.equals("Square"))
       {
         for (int n = 0; n < 4; n++)
         {
-          figure.Contents[n][1][1] = figure.Contents[n][1][2] =                                      //  xx
-                  figure.Contents[n][2][1] = figure.Contents[n][2][2] = true;                                  //  xx
+          figure.contents[n][1][1] = figure.contents[n][1][2] =                                      //  xx
+                  figure.contents[n][2][1] = figure.contents[n][2][2] = true;                                  //  xx
         }
       }
 
-      else if (figure.Type.equals("Line"))
+      else if (figure.type.equals("Line"))
       {
-        figure.Contents[0][2][0] = figure.Contents[0][2][1] = figure.Contents[0][2][2] = figure.Contents[0][2][3] = true;    //  xxxx
+        figure.contents[0][2][0] = figure.contents[0][2][1] = figure.contents[0][2][2] = figure.contents[0][2][3] = true;    //  xxxx
 
-        figure.Contents[1][0][2] =                                                            //  x
-                figure.Contents[1][1][2] =                                                            //  x
-                        figure.Contents[1][2][2] =                                                            //  x
-                                figure.Contents[1][3][2] = true;                                                      //  x
+        figure.contents[1][0][2] =                                                            //  x
+                figure.contents[1][1][2] =                                                            //  x
+                        figure.contents[1][2][2] =                                                            //  x
+                                figure.contents[1][3][2] = true;                                                      //  x
 
-        figure.Contents[2][2][0] = figure.Contents[2][2][1] = figure.Contents[2][2][2] = figure.Contents[2][2][3] = true;    //  xxxx
+        figure.contents[2][2][0] = figure.contents[2][2][1] = figure.contents[2][2][2] = figure.contents[2][2][3] = true;    //  xxxx
 
-        figure.Contents[3][0][2] =                                                            //  x
-                figure.Contents[3][1][2] =                                                            //  x
-                        figure.Contents[3][2][2] =                                                            //  x
-                                figure.Contents[3][3][2] = true;                                                      //  x
+        figure.contents[3][0][2] =                                                            //  x
+                figure.contents[3][1][2] =                                                            //  x
+                        figure.contents[3][2][2] =                                                            //  x
+                                figure.contents[3][3][2] = true;                                                      //  x
       }
 
       Log.log(figure);
@@ -360,7 +360,7 @@ public class CCup extends Thread
   {
     try
     {
-      Dimension scrSize = Runner.getSize();
+      Dimension scrSize = tetris.getSize();
 
       Graphics g = BgImage.getGraphics();
       g.setColor(Color.black);
@@ -401,12 +401,12 @@ public class CCup extends Thread
         }
       }
 
-      g = Runner.getGraphics();
+      g = tetris.getGraphics();
       int x = 0;
       x = scrSize.width / 4;
       synchronized (g)
       {
-        g.drawImage(BgImage, x, 0, Runner);
+        g.drawImage(BgImage, x, 0, tetris);
       }
       IsShouldBeRepainted = false;
     }
@@ -452,20 +452,20 @@ public class CCup extends Thread
     }
   }
 
-  private void paintFigure(CFigure _Figure, Graphics _G, Color _C, int _X, int _Y)
+  private void paintFigure(Figure _Figure, Graphics _G, Color _C, int _X, int _Y)
   {
     try
     {
       if (_Figure == null) return;
 
       _G.setColor(_C);
-      for (int y = 0; y < _Figure.getContents().length; y++)
-        for (int x = 0; x < _Figure.getContents()[0].length; x++)
+      for (int y = 0; y < _Figure.getContentsForCurrRotation().length; y++)
+        for (int x = 0; x < _Figure.getContentsForCurrRotation()[0].length; x++)
         {
-          if (_Figure.getContents()[y][x])
+          if (_Figure.getContentsForCurrRotation()[y][x])
           {
-            _G.fillRect(_X + (_Figure.Location.x + x) * SquareSize,
-                    _Y + (_Figure.Location.y + y) * SquareSize,
+            _G.fillRect(_X + (_Figure.location.x + x) * SquareSize,
+                    _Y + (_Figure.location.y + y) * SquareSize,
                     SquareSize, SquareSize);
           }
         }
@@ -478,71 +478,60 @@ public class CCup extends Thread
 
   private void paintText(String _Text, Graphics _G, Font _Font, Color _Color, int _X, int _Y)
   {
-    try
-    {
-      if (_Text == null) return;
+    if (_Text == null) return;
 
-      _G.setFont(_Font);
-      _G.setColor(_Color);
-      int sw = _G.getFontMetrics().stringWidth(_Text);
-      int sh = _G.getFontMetrics().getHeight();
-      int sx = _X - sw / 2;
-      int sy = _Y + sh + 5;
-      _G.drawString(_Text, sx, sy);
-    }
-    catch (Exception e)
-    {
-      Log.err(getClass().getName() + ".paintText() error : " + e);
-    }
+    _G.setFont(_Font);
+    _G.setColor(_Color);
+    int sw = _G.getFontMetrics().stringWidth(_Text);
+    int sh = _G.getFontMetrics().getHeight();
+    int sx = _X - sw / 2;
+    int sy = _Y + sh + 5;
+    _G.drawString(_Text, sx, sy);
   }
 
-  public void processAction(String _Action)
+  void processAction(String action)
   {
     try
     {
-      if (_Action.equals("No"))
+      if (action.equals("No"))
       {
         State = PrevState;
       }
-      else if (_Action.equals("NewGame"))
-      {
-        Runner.newGame();
-      }
-      else if (_Action.equals("Pause") && State.equals("Game"))
+      else if (action.equals("Pause") && State.equals("Game"))
       {
         setState("Pause");
       }
-      else if (_Action.equals("Pause") && State.equals("Pause"))
+      else if (action.equals("Pause") && State.equals("Pause"))
       {
         setState("Game");
       }
-      else if (_Action.equals("Quit") && State.equals("Game"))
+      else if (action.equals("Quit") && State.equals("Game"))
       {
         setState("Pause");
       }
-      else if (_Action.equals("Quit") && !State.equals("Game"))
+      else if (action.equals("Quit") && !State.equals("Game"))
       {
         setState(State);
       }
-      else if (_Action.equals("MoveLeft") && State.equals("Game"))
+      else if (action.equals("MoveLeft") && State.equals("Game"))
       {
-        CurrentFigure.Location.x--;
-        if (!cfIsValid()) CurrentFigure.Location.x++;
+        CurrentFigure.location.x--;
+        if (!cfIsValid()) CurrentFigure.location.x++;
         else IsShouldBeRepainted = true;
       }
-      else if (_Action.equals("MoveRight") && State.equals("Game"))
+      else if (action.equals("MoveRight") && State.equals("Game"))
       {
-        CurrentFigure.Location.x++;
-        if (!cfIsValid()) CurrentFigure.Location.x--;
+        CurrentFigure.location.x++;
+        if (!cfIsValid()) CurrentFigure.location.x--;
         else IsShouldBeRepainted = true;
       }
-      else if (_Action.equals("Rotate") && State.equals("Game"))
+      else if (action.equals("Rotate") && State.equals("Game"))
       {
         CurrentFigure.rotate();
         if (!cfIsValid()) CurrentFigure.rotateBack();
         else IsShouldBeRepainted = true;
       }
-      else if (_Action.equals("Drop") && State.equals("Game"))
+      else if (action.equals("Drop") && State.equals("Game"))
       {
         setState("Drop");
       }
@@ -562,7 +551,7 @@ public class CCup extends Thread
       while (BgImage == null)
       {
         sleep(100);
-        BgImage = Runner.createImage(Runner.getSize().width / 2, Runner.getSize().height);
+        BgImage = tetris.createImage(tetris.getSize().width / 2, tetris.getSize().height);
       }
 
       while (IsAlive)
@@ -576,7 +565,7 @@ public class CCup extends Thread
 
         if (!cfIsValid())
         {
-          CurrentFigure.Location.y--;
+          CurrentFigure.location.y--;
           cfMerge();
           if (isLevelComplete())
           {
@@ -601,7 +590,7 @@ public class CCup extends Thread
             else
             {
               setState("Victory");
-              Runner.updateScores(PlayerName, Score, true);
+              tetris.updateScores(PlayerName, Score, true);
               continue;
             }
             paint();
@@ -614,7 +603,7 @@ public class CCup extends Thread
             setState("Over");
             paint();
             sleep(2000);
-            Runner.updateScores(PlayerName, Score, true);
+            tetris.updateScores(PlayerName, Score, true);
           }
           else setState("Game");
         }
@@ -651,7 +640,7 @@ public class CCup extends Thread
           }
         }
 
-        CurrentFigure.Location.y++;
+        CurrentFigure.location.y++;
       }
     }
     catch (Exception e)

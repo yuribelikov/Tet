@@ -57,7 +57,7 @@ public class Tetris extends Frame implements IEventReceiver
       newGameMI.addActionListener(eventListener);
       gameMenu.addSeparator();
 
-      cup = new CCup(this, 1);
+      cup = new CCup(this);
     }
     catch (Exception e)
     {
@@ -65,7 +65,7 @@ public class Tetris extends Frame implements IEventReceiver
     }
   }
 
-  void newGame()
+  private void newGame()
   {
     try
     {
@@ -108,7 +108,7 @@ public class Tetris extends Frame implements IEventReceiver
 
 // - - - - - - - - menu and window actions - - - - - - -
       if (evt.getName().equals("ActionPerformed") && evt.getSourceName().equals("NewGame"))
-        cup.processAction("NewGame");
+        newGame();
 
       if (evt.getName().equals("WindowClosing"))
       {

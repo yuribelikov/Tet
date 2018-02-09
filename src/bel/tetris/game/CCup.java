@@ -9,7 +9,7 @@ import java.io.ObjectInputStream;
 
 public class CCup extends Thread
 {
-  private Runner Runner = null;
+  private Tetris Runner = null;
 
   private int W = 10, H = 20, F = 4;    // cup width and height, figure width/height
   private int[][] Contents = null;
@@ -33,7 +33,7 @@ public class CCup extends Thread
   private int DropDelay = 10, MergeDelay = 500;
   private boolean IsAlive = true, IsShouldBeRepainted = false;
 
-  public CCup(Runner _Runner, int _PlayerN)
+  public CCup(Tetris _Runner, int _PlayerN)
   {
     super();
 

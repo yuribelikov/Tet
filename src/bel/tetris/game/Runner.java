@@ -13,7 +13,6 @@ import java.util.Hashtable;
 public class Runner extends Frame implements IEventReceiver
 {
   private CCup cup = null;
-  private COptions options = null;
 
   private CEventListener eventListener = null;
   private MenuBar MB = null;
@@ -38,19 +37,22 @@ public class Runner extends Frame implements IEventReceiver
 
   public void dispatchEvent(CEvent evt)
   {
+    String[] actions = {"MoveLeft", "MoveRight", "Rotate", "Drop"};
+    String[] keys = {"Left", "Right", "Up", "Down"};
+
     try
     {
 // - - - - - - - - key events - - - - - - - - -
       if (evt.getName().equals("KeyPressed"))
       {
         KeyEvent keyEvt = (KeyEvent) evt.getData();
-        String keyKode = keyEvt.getKeyText(keyEvt.getKeyCode());
+        String keyCode = KeyEvent.getKeyText(keyEvt.getKeyCode());
 
-        for (int n = 0; n < options.keys.length; n++)
-          if (options.keys[n].equals(keyKode))
-            cup.processAction(options.actions[n]);
+        for (int n = 0; n < keys.length; n++)
+          if (keys[n].equals(keyCode))
+            cup.processAction(actions[n]);
 
-        if (keyKode.equals("Pause"))
+        if (keyCode.equals("Pause"))
           cup.processAction("Pause");
       }
 
@@ -102,7 +104,6 @@ public class Runner extends Frame implements IEventReceiver
       newGameMI.addActionListener(eventListener);
       gameMenu.addSeparator();
 
-      options = new COptions();
       cup = new CCup(this, 1);
     }
     catch (Exception e)

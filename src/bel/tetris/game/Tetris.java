@@ -106,8 +106,11 @@ public class Tetris extends Frame implements IEventReceiver
 
       if (evt.getName().equals("WindowClosing"))
       {
-        cup.processAction("Quit");
-        cup.finishGame();
+        if (cup != null)
+        {
+          cup.processAction("Quit");
+          cup.finishGame();
+        }
         destroy();
       }
     }

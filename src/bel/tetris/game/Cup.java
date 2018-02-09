@@ -15,20 +15,16 @@ class Cup extends Thread
   private final static Point START_LOCATION = new Point(3, -2);
 
   private final Tetris tetris;
-  private int[][] contents = null;
+  private int[][] contents = new int[H][W];
   private Figure currentFigure = null, nextFigure = null;
 
   private int[] lastFigures = null;
   private int speed = 0, level = 1, score = 0, prize = 0;
   private int squareSize = 20;
   private Image bgImage = null;
-
-
   private String message = null;
-
-  private String State = null, PrevState = null;
-  private int DropDelay = 10, mergeDelay = 500;
-  private boolean isAlive = true, IsShouldBeRepainted = false;
+  private String state = "Idle", prevState = null;
+  private boolean isAlive = true;
 
 
   Cup(Tetris tetris)
@@ -39,6 +35,15 @@ class Cup extends Thread
     lastFigures = new int[2];
     setState("Idle");
     start();
+  }
+
+  void newGame()
+  {
+    loadLevel();
+    nextFigure = generateFigure();
+    cfNext();
+
+    setState("Game");
   }
 
   private boolean cfIsValid()
@@ -103,7 +108,7 @@ class Cup extends Thread
       {
         prize = 100 * completedRowsQ * completedRowsQ * level * (speed + 1);
         paint();
-        sleep(mergeDelay);
+        sleep(500);
         score += prize;
         prize = 0;
         for (int y = 0; y < H; y++)
@@ -151,7 +156,7 @@ class Cup extends Thread
     lastFigures[1] = type;
     Figure figure = new Figure();
     figure.type = FIGURES[type];
-//figure.type="Line";
+    figure.type = "Line";
     figure.location = new Point();
     figure.contents = new boolean[4][F][F];
 
@@ -285,56 +290,12 @@ class Cup extends Thread
 
   private boolean isLevelComplete()
   {
-    try
-    {
-      for (int y = 0; y < H; y++)
-        for (int x = 0; x < W; x++)
-          if (contents[y][x] > 1) return false;
+    for (int y = 0; y < H; y++)
+      for (int x = 0; x < W; x++)
+        if (contents[y][x] > 1)
+          return false;
 
-      return true;
-    }
-    catch (Exception e)
-    {
-      Log.err(getClass().getName() + ".isLevelComplete() error : " + e);
-    }
-
-    return false;
-  }
-
-  private boolean loadLevel()
-  {
-    try
-    {
-      contents = new int[H][W];
-      File f = new File(level + ".lvl");
-      if (!f.exists()) return false;
-
-      ObjectInputStream ois = new ObjectInputStream(new FileInputStream(f));
-      contents = (int[][]) ois.readObject();
-      ois.close();
-
-      return true;
-    }
-    catch (Exception e)
-    {
-      e.printStackTrace();
-    }
-    return false;
-  }
-
-  void newGame()
-  {
-    contents = new int[H][W];
-    currentFigure = nextFigure = null;
-    level = 1;
-    score = 0;
-    setState("Idle");
-
-    loadLevel();
-    nextFigure = generateFigure();
-    cfNext();
-
-    setState("Game");
+    return true;
   }
 
   public synchronized void paint()
@@ -355,7 +316,7 @@ class Cup extends Thread
     g.setColor(Color.black);
     g.fillRect(0, 0, scrSize.width / 2, scrSize.height);
 
-    if (!State.equals("Idle"))
+    if (!state.equals("Idle"))
     {
       g.setColor(cupColor);
       int w = squareSize * W;
@@ -370,13 +331,15 @@ class Cup extends Thread
       paintContents(g, x, y, mergeColor);
       paintFigure(currentFigure, g, figureColor, x, y);
 
-      paintText(message, g, messageFont, messageColor, x + w / 2, y + 80);
+      if (message != null)
+        paintText(message, g, messageFont, messageColor, x + w / 2, y + 80);
+
       paintText("" + level, g, InfoFont, InfoColor, x + w + 50, y + 20);
       paintText(prize == 0 ? ("" + score) : (score + " + " + prize), g, scoreFont, scoreColor, x + w / 2, y + h);
       int mx = x + w / 2, my = y + h / 2 - 50;
       if (prize > 0)
         paintText("" + prize, g, messageFont, messageColor, mx, my);
-      switch (State)
+      switch (state)
       {
         case "Pause":
           paintText("�����", g, messageFont, messageColor, mx, my);
@@ -393,7 +356,6 @@ class Cup extends Thread
     }
 
     tetris.getGraphics().drawImage(bgImage, scrSize.width / 4, 0, tetris);
-    IsShouldBeRepainted = false;
   }
 
   private void paintContents(Graphics _G, int _X, int _Y, Color mergeColor)
@@ -449,60 +411,55 @@ class Cup extends Thread
       }
   }
 
-  private void paintText(String _Text, Graphics _G, Font _Font, Color _Color, int _X, int _Y)
+  private void paintText(String text, Graphics g, Font font, Color color, int x, int y)
   {
-    if (_Text == null) return;
-
-    _G.setFont(_Font);
-    _G.setColor(_Color);
-    int sw = _G.getFontMetrics().stringWidth(_Text);
-    int sh = _G.getFontMetrics().getHeight();
-    int sx = _X - sw / 2;
-    int sy = _Y + sh + 5;
-    _G.drawString(_Text, sx, sy);
+    g.setFont(font);
+    g.setColor(color);
+    int sw = g.getFontMetrics().stringWidth(text);
+    int sh = g.getFontMetrics().getHeight();
+    int sx = x - sw / 2;
+    int sy = y + sh + 5;
+    g.drawString(text, sx, sy);
   }
 
   void processAction(String action)
   {
     if (action.equals("No"))
     {
-      State = PrevState;
+      state = prevState;
     }
-    else if (action.equals("Pause") && State.equals("Game"))
+    else if (action.equals("Pause") && state.equals("Game"))
     {
       setState("Pause");
     }
-    else if (action.equals("Pause") && State.equals("Pause"))
+    else if (action.equals("Pause") && state.equals("Pause"))
     {
       setState("Game");
     }
-    else if (action.equals("Quit") && State.equals("Game"))
+    else if (action.equals("Quit") && state.equals("Game"))
     {
       setState("Pause");
     }
-    else if (action.equals("Quit") && !State.equals("Game"))
+    else if (action.equals("Quit") && !state.equals("Game"))
     {
-      setState(State);
+      setState(state);
     }
-    else if (action.equals("MoveLeft") && State.equals("Game"))
+    else if (action.equals("MoveLeft") && state.equals("Game"))
     {
       currentFigure.location.x--;
       if (!cfIsValid()) currentFigure.location.x++;
-      else IsShouldBeRepainted = true;
     }
-    else if (action.equals("MoveRight") && State.equals("Game"))
+    else if (action.equals("MoveRight") && state.equals("Game"))
     {
       currentFigure.location.x++;
       if (!cfIsValid()) currentFigure.location.x--;
-      else IsShouldBeRepainted = true;
     }
-    else if (action.equals("Rotate") && State.equals("Game"))
+    else if (action.equals("Rotate") && state.equals("Game"))
     {
       currentFigure.rotate();
       if (!cfIsValid()) currentFigure.rotateBack();
-      else IsShouldBeRepainted = true;
     }
-    else if (action.equals("Drop") && State.equals("Game"))
+    else if (action.equals("Drop") && state.equals("Game"))
     {
       setState("Drop");
     }
@@ -510,18 +467,14 @@ class Cup extends Thread
 
   public void run()
   {
-    Log.log(getClass().getName() + " is started.");
+    System.out.println("Cup is started.");
     try
     {
-      while (bgImage == null)
-      {
-        sleep(100);
-        bgImage = tetris.createImage(tetris.getSize().width / 2, tetris.getSize().height);
-      }
+      bgImage = tetris.createImage(tetris.getSize().width / 2, tetris.getSize().height);
 
       while (isAlive)
       {
-        if (!(State.equals("Game") || State.equals("Drop")))
+        if (!(state.equals("Game") || state.equals("Drop")))
         {
           paint();
           sleep(50);
@@ -533,35 +486,8 @@ class Cup extends Thread
           currentFigure.location.y--;
           cfMerge();
           if (isLevelComplete())
-          {
-            currentFigure = null;
-            paint();
-            sleep(500);
-            prize = 5000 * level * (speed + 1);
-            message = "����";
-            paint();
-            sleep(3000);
-            score += prize;
-            prize = 0;
-            contents = null;
-            message = null;
-            paint();
-            sleep(500);
-            level++;
-            if (loadLevel())
-            {
-              message = "������� " + level;
-            }
-            else
-            {
-              setState("Victory");
-//              tetris.updateScores("", score, true);
-              continue;
-            }
-            paint();
-            sleep(2000);
-            message = null;
-          }
+            nextLevel();
+
           cfNext();
           if (!cfIsValid())
           {
@@ -575,7 +501,7 @@ class Cup extends Thread
 
         paint();
 
-        if (State.equals("Drop")) sleep(DropDelay);
+        if (state.equals("Drop")) sleep(10);
         else
         {
           int delay = 0;
@@ -599,9 +525,9 @@ class Cup extends Thread
           }
           for (int n = 0; n < delay; n++)
           {
-            if (!State.equals("Game")) break;
+            if (!state.equals("Game")) break;
             sleep(1);
-            if (IsShouldBeRepainted) paint();
+            paint();
           }
         }
 
@@ -610,16 +536,63 @@ class Cup extends Thread
     }
     catch (Exception e)
     {
-      Log.err(getClass().getName() + ".run() error : " + e);
+      e.printStackTrace();
     }
-    Log.log(getClass().getName() + " is stopped.");
+    System.out.println("Cup is stopped.");
+  }
+
+  private void nextLevel() throws Exception
+  {
+    currentFigure = null;
+    paint();
+    sleep(500);
+    prize = 5000 * level * (speed + 1);
+    message = "Bonus";
+    paint();
+    sleep(1000);    // TODO: increase to 3000
+    score += prize;
+    prize = 0;
+    contents = null;
+    message = null;
+    paint();
+    sleep(500);
+    level++;
+    if (loadLevel())
+      message = "Next Level: " + level;
+    else
+    {
+      setState("Victory");
+//              tetris.updateScores("", score, true);
+    }
+    paint();
+    sleep(2000);
+    message = null;
+  }
+  private boolean loadLevel()
+  {
+    try
+    {
+      contents = new int[H][W];
+      File f = new File(level + ".lvl");
+      if (!f.exists()) return false;
+
+      ObjectInputStream ois = new ObjectInputStream(new FileInputStream(f));
+      contents = (int[][]) ois.readObject();
+      ois.close();
+
+      return true;
+    }
+    catch (Exception e)
+    {
+      e.printStackTrace();
+    }
+    return false;
   }
 
   private void setState(String newState)
   {
-    PrevState = State;
-    State = newState;
-    IsShouldBeRepainted = true;
+    prevState = state;
+    state = newState;
   }
 
   void setStop()

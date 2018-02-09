@@ -1,16 +1,14 @@
 package bel.tetris.event;
 
-import lib.util.Log;
-
 import java.awt.event.*;
 
 public class CEventListener implements WindowListener, ComponentListener, KeyListener, MouseListener, ActionListener, ItemListener
 {
-  private IEventReceiver EventReceiver = null;
+  private IEventReceiver eventReceiver = null;
 
   public CEventListener(IEventReceiver _EventReceiver)
   {
-    EventReceiver = _EventReceiver;
+    eventReceiver = _EventReceiver;
   }
 
   public void actionPerformed(ActionEvent evt)
@@ -38,10 +36,9 @@ public class CEventListener implements WindowListener, ComponentListener, KeyLis
     dispatchEvent(new CEvent("ComponentShown", evt));
   }
 
-  public void dispatchEvent(CEvent _Evt)
+  private void dispatchEvent(CEvent _Evt)
   {
-    Log.log(_Evt);
-    EventReceiver.dispatchEvent(_Evt);
+    eventReceiver.dispatchEvent(_Evt);
   }
 
   public void itemStateChanged(ItemEvent evt)

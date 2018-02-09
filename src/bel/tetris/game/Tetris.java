@@ -10,7 +10,7 @@ import java.util.Properties;
 
 public class Tetris extends Frame implements IEventReceiver
 {
-  private CCup cup = null;
+  private Cup cup = null;
 
 
   public static void main(String[] args)
@@ -57,7 +57,7 @@ public class Tetris extends Frame implements IEventReceiver
       newGameMI.addActionListener(eventListener);
       gameMenu.addSeparator();
 
-      cup = new CCup(this);
+      cup = new Cup(this);
     }
     catch (Exception e)
     {

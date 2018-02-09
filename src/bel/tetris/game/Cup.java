@@ -7,7 +7,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.ObjectInputStream;
 
-public class CCup extends Thread
+public class Cup extends Thread
 {
   private Tetris tetris = null;
 
@@ -34,7 +34,7 @@ public class CCup extends Thread
   private boolean IsAlive = true, IsShouldBeRepainted = false;
 
 
-  CCup(Tetris tetris)
+  Cup(Tetris tetris)
   {
     super();
 

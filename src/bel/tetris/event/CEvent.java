@@ -37,12 +37,8 @@ public class CEvent
   private Object Source = null;
   private String SourceName = null;
 
-  public CEvent(String _Name)
-  {
-    this(_Name, null);
-  }
 
-  public CEvent(String _Name, Object _Data)
+  CEvent(String _Name, Object _Data)
   {
     super();
     Name = _Name;
@@ -81,11 +77,6 @@ public class CEvent
   public String getName()
   {
     return Name;
-  }
-
-  public Object getSource()
-  {
-    return Source;
   }
 
   public String getSourceName()

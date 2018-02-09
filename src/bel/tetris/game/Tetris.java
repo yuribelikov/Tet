@@ -6,7 +6,6 @@ import bel.tetris.event.IEventReceiver;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.Properties;
 
 public class Tetris extends Frame implements IEventReceiver
 {
@@ -21,7 +20,6 @@ public class Tetris extends Frame implements IEventReceiver
     {
       app.init();
       app.showSelf();
-      app.cup.start();
     }
     catch (Exception e)
     {
@@ -57,7 +55,6 @@ public class Tetris extends Frame implements IEventReceiver
       newGameMI.addActionListener(eventListener);
       gameMenu.addSeparator();
 
-      cup = new Cup(this);
     }
     catch (Exception e)
     {
@@ -69,15 +66,12 @@ public class Tetris extends Frame implements IEventReceiver
   {
     try
     {
-      Properties data = new Properties();
-      data.put("PlayersQ", "1");
-      data.put("Player1Name", "PlayerName");
-      data.put("Speed", "2");
-      data.put("IsNextFigureShowed", "true");
+      if (cup != null)
+        cup.finishGame();
 
-      cup.finishGame();
-      getGraphics().clearRect(0, 0, getSize().width, getSize().height);
-      cup.newGame(data);
+      cup = new Cup(this);
+//      getGraphics().clearRect(0, 0, getSize().width, getSize().height);
+      cup.newGame();
     }
     catch (Exception e)
     {
@@ -136,16 +130,12 @@ public class Tetris extends Frame implements IEventReceiver
     setVisible(true);
   }
 
-  public void updateScores(String playerName, int score, boolean isShowScoreBox)
-  {
-
-  }
-
   private void destroy()
   {
     try
     {
-      cup.setStop();
+      if (cup != null)
+        cup.setStop();
       dispose();
       System.exit(0);
     }

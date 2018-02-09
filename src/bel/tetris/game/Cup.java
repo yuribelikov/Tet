@@ -7,31 +7,28 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.ObjectInputStream;
 
-public class Cup extends Thread
+class Cup extends Thread
 {
-  private Tetris tetris = null;
+  private final static String FIGURES[] = {"LStair", "RStair", "Podium", "LCorner", "RCorner", "Square", "Line"};
+  private final static Color[] PALETTE = {null, new Color(222, 222, 222), Color.red, Color.green, Color.blue, Color.yellow, Color.cyan, Color.orange, Color.pink};
+  private final static int W = 10, H = 20, F = 4;    // cup width and height, figure width/height
+  private final static Point START_LOCATION = new Point(3, -2);
 
-  private int W = 10, H = 20, F = 4;    // cup width and height, figure width/height
-  private int[][] Contents = null;
-  private String FigureTypes[] = {"LStair", "RStair", "Podium", "LCorner", "RCorner", "Square", "Line"};
-  private Figure CurrentFigure = null, NextFigure = null;
-  private int[] PrevFigureTypes = null;
-  private int PlayerN = 1, Speed = 0, Level = 0, Score = 0, Prize = 0;
-  private boolean IsNextFigureShowed = false;
-  private String PlayerName = null;
+  private final Tetris tetris;
+  private int[][] contents = null;
+  private Figure currentFigure = null, nextFigure = null;
 
-  private int SquareSize = 20;
-  private Image BgImage = null;
-  private Point StartLocation = null;
-  private Color[] Palette = {null, new Color(222, 222, 222), Color.red, Color.green, Color.blue, Color.yellow, Color.cyan, Color.orange, Color.pink};
-  private Color CupColor = null, CurrentFigureColor = null, NextFigureColor = null,
-          MergeColor = null, ScoreColor = null, MessageColor = null, InfoColor = null, PlayerNameColor = null;
-  private Font ScoreFont = null, MessageFont = null, InfoFont = null, PlayerNameFont = null;
-  private String Text = null;
+  private int[] lastFigures = null;
+  private int speed = 0, level = 1, score = 0, prize = 0;
+  private int squareSize = 20;
+  private Image bgImage = null;
+
+
+  private String message = null;
 
   private String State = null, PrevState = null;
-  private int DropDelay = 10, MergeDelay = 500;
-  private boolean IsAlive = true, IsShouldBeRepainted = false;
+  private int DropDelay = 10, mergeDelay = 500;
+  private boolean isAlive = true, IsShouldBeRepainted = false;
 
 
   Cup(Tetris tetris)
@@ -39,38 +36,25 @@ public class Cup extends Thread
     super();
 
     this.tetris = tetris;
-    PrevFigureTypes = new int[2];
-    StartLocation = new Point(3, -2);
+    lastFigures = new int[2];
     setState("Idle");
-
-    CupColor = new Color(150, 150, 255);
-    CurrentFigureColor = new Color(180, 255, 180);
-    NextFigureColor = new Color(255, 100, 100);
-    MergeColor = new Color(255, 150, 255);
-    ScoreColor = new Color(220, 220, 255);
-    ScoreFont = new Font("Dialog", 1, 24);
-    MessageColor = new Color(255, 255, 150);
-    MessageFont = new Font("Dialog", 1, 60);
-    InfoColor = new Color(220, 220, 240);
-    InfoFont = new Font("Dialog", 1, 48);
-    PlayerNameColor = new Color(240, 240, 255);
-    PlayerNameFont = new Font("Dialog", 1, 32);
+    start();
   }
 
   private boolean cfIsValid()
   {
     try
     {
-      for (int y = 0; y < CurrentFigure.getContentsForCurrRotation().length; y++)
-        for (int x = 0; x < CurrentFigure.getContentsForCurrRotation()[0].length; x++)
+      for (int y = 0; y < currentFigure.getContentsForCurrRotation().length; y++)
+        for (int x = 0; x < currentFigure.getContentsForCurrRotation()[0].length; x++)
         {
-          if (!CurrentFigure.getContentsForCurrRotation()[y][x]) continue;
-          int cx = CurrentFigure.location.x + x;
-          int cy = CurrentFigure.location.y + y;
+          if (!currentFigure.getContentsForCurrRotation()[y][x]) continue;
+          int cx = currentFigure.location.x + x;
+          int cy = currentFigure.location.y + y;
           if (cx < 0 || cx >= W) return false;
           if (cy >= H) return false;
           if (cy < 0) continue;
-          if (Contents[cy][cx] > 0) return false;
+          if (contents[cy][cx] > 0) return false;
         }
 
       return true;
@@ -87,15 +71,15 @@ public class Cup extends Thread
   {
     try
     {
-      for (int y = 0; y < CurrentFigure.getContentsForCurrRotation().length; y++)
-        for (int x = 0; x < CurrentFigure.getContentsForCurrRotation()[0].length; x++)
+      for (int y = 0; y < currentFigure.getContentsForCurrRotation().length; y++)
+        for (int x = 0; x < currentFigure.getContentsForCurrRotation()[0].length; x++)
         {
-          if (!CurrentFigure.getContentsForCurrRotation()[y][x]) continue;
-          int cx = CurrentFigure.location.x + x;
-          int cy = CurrentFigure.location.y + y;
+          if (!currentFigure.getContentsForCurrRotation()[y][x]) continue;
+          int cx = currentFigure.location.x + x;
+          int cy = currentFigure.location.y + y;
           if (cx < 0 || cx >= W) continue;
           if (cy < 0 || cy >= H) continue;
-          Contents[cy][cx] = 1;
+          contents[cy][cx] = 1;
         }
 
       int completedRowsQ = 0;
@@ -105,7 +89,7 @@ public class Cup extends Thread
         boolean isRowComplete = true;
         for (int x = 0; x < W; x++)
         {
-          if (Contents[y][x] == 0)
+          if (contents[y][x] == 0)
           {
             isRowComplete = false;
             break;
@@ -117,20 +101,20 @@ public class Cup extends Thread
 
       if (completedRowsQ > 0)
       {
-        Prize = 100 * completedRowsQ * completedRowsQ * Level * (Speed + 1);
+        prize = 100 * completedRowsQ * completedRowsQ * level * (speed + 1);
         paint();
-        sleep(MergeDelay);
-        Score += Prize;
-        Prize = 0;
+        sleep(mergeDelay);
+        score += prize;
+        prize = 0;
         for (int y = 0; y < H; y++)
         {
           if (completedRows[y])
           {
             int[][] contents = new int[H][W];
-            System.arraycopy(Contents, 0, contents, 1, y);
-            System.arraycopy(Contents, y + 1, contents, y + 1, H - y - 1);
-            Contents = contents;
-            for (int x = 0; x < W; x++) Contents[0][x] = 0;
+            System.arraycopy(this.contents, 0, contents, 1, y);
+            System.arraycopy(this.contents, y + 1, contents, y + 1, H - y - 1);
+            this.contents = contents;
+            for (int x = 0; x < W; x++) this.contents[0][x] = 0;
           }
         }
       }
@@ -139,157 +123,164 @@ public class Cup extends Thread
     }
     catch (Exception e)
     {
-      Log.err(getClass().getName() + ".cfMerge() error : " + e);
+      e.printStackTrace();
     }
   }
 
   private void cfNext()
   {
-    CurrentFigure = NextFigure;
-    CurrentFigure.location.x = StartLocation.x;
-    CurrentFigure.location.y = StartLocation.y;
-    NextFigure = generateFigure();
+    currentFigure = nextFigure;
+    currentFigure.location.x = START_LOCATION.x;
+    currentFigure.location.y = START_LOCATION.y;
+    nextFigure = generateFigure();
   }
 
-  public void finishGame()
+  void finishGame()
   {
-    tetris.updateScores(PlayerName, Score, false);
+//    tetris.updateScores("", score, false);
+    setStop();
   }
 
   private Figure generateFigure()
   {
-    try
-    {
-      int type = -1;
-      while (type < 0 || (type == PrevFigureTypes[0] && type == PrevFigureTypes[1]))
-        type = (int) Math.round((FigureTypes.length - 1) * Math.random());
+    int type = -1;
+    while (type < 0 || (type == lastFigures[0] && type == lastFigures[1]))
+      type = (int) Math.round((FIGURES.length - 1) * Math.random());
 
-      PrevFigureTypes[0] = PrevFigureTypes[1];
-      PrevFigureTypes[1] = type;
-      Figure figure = new Figure();
-      figure.type = FigureTypes[type];
+    lastFigures[0] = lastFigures[1];
+    lastFigures[1] = type;
+    Figure figure = new Figure();
+    figure.type = FIGURES[type];
 //figure.type="Line";
-      figure.location = new Point();
-      figure.contents = new boolean[4][F][F];
+    figure.location = new Point();
+    figure.contents = new boolean[4][F][F];
 
-      if (figure.type.equals("LStair"))
-      {
+    switch (figure.type)
+    {
+      case "LStair":
         figure.contents[0][1][2] = figure.contents[0][1][3] =                //  xx
                 figure.contents[0][2][1] = figure.contents[0][2][2] = true;            // xx
+
 
         figure.contents[1][1][1] =                                          // x
                 figure.contents[1][2][1] = figure.contents[1][2][2] =                // xx
                         figure.contents[1][3][2] = true;                                    //  x
 
+
         figure.contents[2][1][2] = figure.contents[2][1][3] =                //  xx
                 figure.contents[2][2][1] = figure.contents[2][2][2] = true;            // xx
+
 
         figure.contents[3][1][1] =                                          // x
                 figure.contents[3][2][1] = figure.contents[3][2][2] =                // xx
                         figure.contents[3][3][2] = true;                                    //  x
-      }
-      else if (figure.type.equals("RStair"))
-      {
+
+        break;
+      case "RStair":
         figure.contents[0][1][0] = figure.contents[0][1][1] =                // xx
                 figure.contents[0][2][1] = figure.contents[0][2][2] = true;            //  xx
+
 
         figure.contents[1][1][2] =                                          //  x
                 figure.contents[1][2][1] = figure.contents[1][2][2] =                // xx
                         figure.contents[1][3][1] = true;                                    // x
 
+
         figure.contents[2][1][0] = figure.contents[2][1][1] =                // xx
                 figure.contents[2][2][1] = figure.contents[2][2][2] = true;            //  xx
+
 
         figure.contents[3][1][2] =                                          //  x
                 figure.contents[3][2][1] = figure.contents[3][2][2] =                // xx
                         figure.contents[3][3][1] = true;                                    // x
-      }
 
-      else if (figure.type.equals("Podium"))
-      {
+        break;
+      case "Podium":
         figure.contents[0][1][2] =                                          //   x
                 figure.contents[0][2][1] = figure.contents[0][2][2] =                //  xx
                         figure.contents[0][3][2] = true;                                    //   x
 
+
         figure.contents[1][1][1] =                                                              //  x
                 figure.contents[1][2][0] = figure.contents[1][2][1] = figure.contents[1][2][2] = true;      // xxx
+
 
         figure.contents[2][1][1] =                                          //  x
                 figure.contents[2][2][1] = figure.contents[2][2][2] =                //  xx
                         figure.contents[2][3][1] = true;                                    //  x
 
+
         figure.contents[3][1][0] = figure.contents[3][1][1] = figure.contents[3][1][2] =            // xxx
                 figure.contents[3][2][1] = true;                                                        //  x
-      }
 
-      else if (figure.type.equals("LCorner"))
-      {
+        break;
+      case "LCorner":
         figure.contents[0][1][1] = figure.contents[0][1][2] =                //  xx
                 figure.contents[0][2][2] =                                          //   x
                         figure.contents[0][3][2] = true;                                    //   x
 
+
         figure.contents[1][1][2] =                                                              //   x
                 figure.contents[1][2][0] = figure.contents[1][2][1] = figure.contents[1][2][2] = true;      // xxx
+
 
         figure.contents[2][1][1] =                                          //  x
                 figure.contents[2][2][1] =                                          //  x
                         figure.contents[2][3][1] = figure.contents[2][3][2] = true;            //  xx
 
+
         figure.contents[3][1][0] = figure.contents[3][1][1] = figure.contents[3][1][2] =            // xxx
                 figure.contents[3][2][0] = true;                                                        // x
-      }
-      else if (figure.type.equals("RCorner"))
-      {
+
+        break;
+      case "RCorner":
         figure.contents[0][1][1] = figure.contents[0][1][2] =                //  xx
                 figure.contents[0][2][1] =                                          //  x
                         figure.contents[0][3][1] = true;                                    //  x
 
+
         figure.contents[1][1][0] = figure.contents[1][1][1] = figure.contents[1][1][2] =            // xxx
                 figure.contents[1][2][2] = true;                                                        //   x
+
 
         figure.contents[2][1][2] =                                          //   x
                 figure.contents[2][2][2] =                                          //   x
                         figure.contents[2][3][1] = figure.contents[2][3][2] = true;            //  xx
 
+
         figure.contents[3][1][0] =                                                              // x
                 figure.contents[3][2][0] = figure.contents[3][2][1] = figure.contents[3][2][2] = true;      // xxx
-      }
 
-      else if (figure.type.equals("Square"))
-      {
+        break;
+      case "Square":
         for (int n = 0; n < 4; n++)
         {
           figure.contents[n][1][1] = figure.contents[n][1][2] =                                      //  xx
                   figure.contents[n][2][1] = figure.contents[n][2][2] = true;                                  //  xx
         }
-      }
-
-      else if (figure.type.equals("Line"))
-      {
+        break;
+      case "Line":
         figure.contents[0][2][0] = figure.contents[0][2][1] = figure.contents[0][2][2] = figure.contents[0][2][3] = true;    //  xxxx
+
 
         figure.contents[1][0][2] =                                                            //  x
                 figure.contents[1][1][2] =                                                            //  x
                         figure.contents[1][2][2] =                                                            //  x
                                 figure.contents[1][3][2] = true;                                                      //  x
 
+
         figure.contents[2][2][0] = figure.contents[2][2][1] = figure.contents[2][2][2] = figure.contents[2][2][3] = true;    //  xxxx
 
-        figure.contents[3][0][2] =                                                            //  x
-                figure.contents[3][1][2] =                                                            //  x
-                        figure.contents[3][2][2] =                                                            //  x
-                                figure.contents[3][3][2] = true;                                                      //  x
-      }
 
-      Log.log(figure);
-      return figure;
-    }
-    catch (Exception e)
-    {
-      Log.err(getClass().getName() + ".generateFigure() error : " + e);
+        figure.contents[3][0][2] = true;                                                            //  x
+        figure.contents[3][1][2] = true;                                                            //  x
+        figure.contents[3][2][2] = true;                                                            //  x
+        figure.contents[3][3][2] = true;                                                            //  x
+
+        break;
     }
 
-    return null;
+    return figure;
   }
 
   private boolean isLevelComplete()
@@ -298,7 +289,7 @@ public class Cup extends Thread
     {
       for (int y = 0; y < H; y++)
         for (int x = 0; x < W; x++)
-          if (Contents[y][x] > 1) return false;
+          if (contents[y][x] > 1) return false;
 
       return true;
     }
@@ -314,120 +305,109 @@ public class Cup extends Thread
   {
     try
     {
-      Contents = new int[H][W];
-      File f = new File(Level + ".lvl");
+      contents = new int[H][W];
+      File f = new File(level + ".lvl");
       if (!f.exists()) return false;
 
       ObjectInputStream ois = new ObjectInputStream(new FileInputStream(f));
-      Contents = (int[][]) ois.readObject();
+      contents = (int[][]) ois.readObject();
       ois.close();
 
       return true;
     }
     catch (Exception e)
     {
-      Log.err(getClass().getName() + ".loadLevel() error : " + e);
+      e.printStackTrace();
     }
     return false;
   }
 
-  public void newGame(java.util.Hashtable _Data)
+  void newGame()
   {
-    try
-    {
-      Contents = new int[H][W];
-      CurrentFigure = NextFigure = null;
-      Level = 1;
-      Score = 0;
-      setState("Idle");
+    contents = new int[H][W];
+    currentFigure = nextFigure = null;
+    level = 1;
+    score = 0;
+    setState("Idle");
 
-      PlayerName = (String) _Data.get("Player" + PlayerN + "Name");
-      Speed = (int) Integer.parseInt((String) _Data.get("Speed"));
-      IsNextFigureShowed = _Data.get("IsNextFigureShowed").equals("true");
-      loadLevel();
-      NextFigure = generateFigure();
-      cfNext();
+    loadLevel();
+    nextFigure = generateFigure();
+    cfNext();
 
-      setState("Game");
-    }
-    catch (Exception e)
-    {
-      Log.err(getClass().getName() + ".newGame() error : " + e);
-    }
+    setState("Game");
   }
 
   public synchronized void paint()
   {
-    try
+    Color cupColor = new Color(150, 150, 255);
+    Color figureColor = new Color(180, 255, 180);
+    Color mergeColor = new Color(255, 150, 255);
+    Color scoreColor = new Color(220, 220, 255);
+    Font scoreFont = new Font("Dialog", 1, 24);
+    Color messageColor = new Color(255, 255, 150);
+    Font messageFont = new Font("Dialog", 1, 60);
+    Color InfoColor = new Color(220, 220, 240);
+    Font InfoFont = new Font("Dialog", 1, 48);
+
+    Dimension scrSize = tetris.getSize();
+
+    Graphics g = bgImage.getGraphics();
+    g.setColor(Color.black);
+    g.fillRect(0, 0, scrSize.width / 2, scrSize.height);
+
+    if (!State.equals("Idle"))
     {
-      Dimension scrSize = tetris.getSize();
+      g.setColor(cupColor);
+      int w = squareSize * W;
+      int h = squareSize * H;
+      int x = scrSize.width / 4 - w / 2;
+      int y = scrSize.height / 2 - h / 2 + 30;
+      g.fillRect(x - 4, y, 4, h + 4);
+      g.fillRect(x + w, y, 4, h + 4);
+      g.fillRect(x, y + h, w, 4);
 
-      Graphics g = BgImage.getGraphics();
-      g.setColor(Color.black);
-      g.fillRect(0, 0, scrSize.width / 2, scrSize.height);
+      paintFigure(nextFigure, g, figureColor, x + w + 10, y + h / 2 - squareSize * 2);
+      paintContents(g, x, y, mergeColor);
+      paintFigure(currentFigure, g, figureColor, x, y);
 
-      if (!State.equals("Idle"))
+      paintText(message, g, messageFont, messageColor, x + w / 2, y + 80);
+      paintText("" + level, g, InfoFont, InfoColor, x + w + 50, y + 20);
+      paintText(prize == 0 ? ("" + score) : (score + " + " + prize), g, scoreFont, scoreColor, x + w / 2, y + h);
+      int mx = x + w / 2, my = y + h / 2 - 50;
+      if (prize > 0)
+        paintText("" + prize, g, messageFont, messageColor, mx, my);
+      switch (State)
       {
-        g.setColor(CupColor);
-        int w = SquareSize * W;
-        int h = SquareSize * H;
-        int x = scrSize.width / 4 - w / 2;
-        int y = scrSize.height / 2 - h / 2 + 30;
-        g.fillRect(x - 4, y, 4, h + 4);
-        g.fillRect(x + w, y, 4, h + 4);
-        g.fillRect(x, y + h, w, 4);
-
-        if (IsNextFigureShowed)
-          paintFigure(NextFigure, g, NextFigureColor, x + w + 10, y + h / 2 - SquareSize * 2);
-        paintContents(g, x, y);
-        paintFigure(CurrentFigure, g, CurrentFigureColor, x, y);
-
-        paintText(Text, g, MessageFont, MessageColor, x + w / 2, y + 80);
-        paintText(PlayerName, g, PlayerNameFont, PlayerNameColor, x + w / 2, y - 65);
-        paintText("" + Level, g, InfoFont, InfoColor, x + w + 50, y + 20);
-        paintText(Prize == 0 ? ("" + Score) : (Score + " + " + Prize), g, ScoreFont, ScoreColor, x + w / 2, y + h);
-        int mx = x + w / 2, my = y + h / 2 - 50;
-        if (Prize > 0) paintText("" + Prize, g, MessageFont, MessageColor, mx, my);
-        if (State.equals("Pause")) paintText("�����", g, MessageFont, MessageColor, mx, my);
-        else if (State.equals("Over"))
-        {
-          paintText("��", g, MessageFont, MessageColor, mx, my);
-          paintText("���������", g, MessageFont, MessageColor, mx, my + 60);
-        }
-        else if (State.equals("Victory"))
-        {
-          paintText("��", g, MessageFont, MessageColor, mx, my);
-          paintText("��������", g, MessageFont, MessageColor, mx, my + 60);
-        }
+        case "Pause":
+          paintText("�����", g, messageFont, messageColor, mx, my);
+          break;
+        case "Over":
+          paintText("��", g, messageFont, messageColor, mx, my);
+          paintText("���������", g, messageFont, messageColor, mx, my + 60);
+          break;
+        case "Victory":
+          paintText("��", g, messageFont, messageColor, mx, my);
+          paintText("��������", g, messageFont, messageColor, mx, my + 60);
+          break;
       }
+    }
 
-      g = tetris.getGraphics();
-      int x = 0;
-      x = scrSize.width / 4;
-      synchronized (g)
-      {
-        g.drawImage(BgImage, x, 0, tetris);
-      }
-      IsShouldBeRepainted = false;
-    }
-    catch (Exception e)
-    {
-      Log.err(getClass().getName() + ".paint() error : " + e);
-    }
+    tetris.getGraphics().drawImage(bgImage, scrSize.width / 4, 0, tetris);
+    IsShouldBeRepainted = false;
   }
 
-  private void paintContents(Graphics _G, int _X, int _Y)
+  private void paintContents(Graphics _G, int _X, int _Y, Color mergeColor)
   {
     try
     {
-      if (Contents == null) return;
+      if (contents == null) return;
 
       for (int y = 0; y < H; y++)
       {
         boolean isRowComplete = true;
         for (int x = 0; x < W; x++)
         {
-          if (Contents[y][x] == 0)
+          if (contents[y][x] == 0)
           {
             isRowComplete = false;
             break;
@@ -435,13 +415,13 @@ public class Cup extends Thread
         }
         for (int x = 0; x < W; x++)
         {
-          if (Contents[y][x] > 0)
+          if (contents[y][x] > 0)
           {
-            if (isRowComplete) _G.setColor(MergeColor);
-            else _G.setColor(Palette[Contents[y][x]]);
-            _G.fillRect(_X + x * SquareSize,
-                    _Y + y * SquareSize,
-                    SquareSize, SquareSize);
+            if (isRowComplete) _G.setColor(mergeColor);
+            else _G.setColor(PALETTE[contents[y][x]]);
+            _G.fillRect(_X + x * squareSize,
+                    _Y + y * squareSize,
+                    squareSize, squareSize);
           }
         }
       }
@@ -454,26 +434,19 @@ public class Cup extends Thread
 
   private void paintFigure(Figure _Figure, Graphics _G, Color _C, int _X, int _Y)
   {
-    try
-    {
-      if (_Figure == null) return;
+    if (_Figure == null) return;
 
-      _G.setColor(_C);
-      for (int y = 0; y < _Figure.getContentsForCurrRotation().length; y++)
-        for (int x = 0; x < _Figure.getContentsForCurrRotation()[0].length; x++)
+    _G.setColor(_C);
+    for (int y = 0; y < _Figure.getContentsForCurrRotation().length; y++)
+      for (int x = 0; x < _Figure.getContentsForCurrRotation()[0].length; x++)
+      {
+        if (_Figure.getContentsForCurrRotation()[y][x])
         {
-          if (_Figure.getContentsForCurrRotation()[y][x])
-          {
-            _G.fillRect(_X + (_Figure.location.x + x) * SquareSize,
-                    _Y + (_Figure.location.y + y) * SquareSize,
-                    SquareSize, SquareSize);
-          }
+          _G.fillRect(_X + (_Figure.location.x + x) * squareSize,
+                  _Y + (_Figure.location.y + y) * squareSize,
+                  squareSize, squareSize);
         }
-    }
-    catch (Exception e)
-    {
-      Log.err(getClass().getName() + ".paintFigure() error : " + e);
-    }
+      }
   }
 
   private void paintText(String _Text, Graphics _G, Font _Font, Color _Color, int _X, int _Y)
@@ -491,55 +464,47 @@ public class Cup extends Thread
 
   void processAction(String action)
   {
-    try
+    if (action.equals("No"))
     {
-      if (action.equals("No"))
-      {
-        State = PrevState;
-      }
-      else if (action.equals("Pause") && State.equals("Game"))
-      {
-        setState("Pause");
-      }
-      else if (action.equals("Pause") && State.equals("Pause"))
-      {
-        setState("Game");
-      }
-      else if (action.equals("Quit") && State.equals("Game"))
-      {
-        setState("Pause");
-      }
-      else if (action.equals("Quit") && !State.equals("Game"))
-      {
-        setState(State);
-      }
-      else if (action.equals("MoveLeft") && State.equals("Game"))
-      {
-        CurrentFigure.location.x--;
-        if (!cfIsValid()) CurrentFigure.location.x++;
-        else IsShouldBeRepainted = true;
-      }
-      else if (action.equals("MoveRight") && State.equals("Game"))
-      {
-        CurrentFigure.location.x++;
-        if (!cfIsValid()) CurrentFigure.location.x--;
-        else IsShouldBeRepainted = true;
-      }
-      else if (action.equals("Rotate") && State.equals("Game"))
-      {
-        CurrentFigure.rotate();
-        if (!cfIsValid()) CurrentFigure.rotateBack();
-        else IsShouldBeRepainted = true;
-      }
-      else if (action.equals("Drop") && State.equals("Game"))
-      {
-        setState("Drop");
-      }
-
+      State = PrevState;
     }
-    catch (Exception e)
+    else if (action.equals("Pause") && State.equals("Game"))
     {
-      Log.err(getClass().getName() + ".processAction() error : " + e);
+      setState("Pause");
+    }
+    else if (action.equals("Pause") && State.equals("Pause"))
+    {
+      setState("Game");
+    }
+    else if (action.equals("Quit") && State.equals("Game"))
+    {
+      setState("Pause");
+    }
+    else if (action.equals("Quit") && !State.equals("Game"))
+    {
+      setState(State);
+    }
+    else if (action.equals("MoveLeft") && State.equals("Game"))
+    {
+      currentFigure.location.x--;
+      if (!cfIsValid()) currentFigure.location.x++;
+      else IsShouldBeRepainted = true;
+    }
+    else if (action.equals("MoveRight") && State.equals("Game"))
+    {
+      currentFigure.location.x++;
+      if (!cfIsValid()) currentFigure.location.x--;
+      else IsShouldBeRepainted = true;
+    }
+    else if (action.equals("Rotate") && State.equals("Game"))
+    {
+      currentFigure.rotate();
+      if (!cfIsValid()) currentFigure.rotateBack();
+      else IsShouldBeRepainted = true;
+    }
+    else if (action.equals("Drop") && State.equals("Game"))
+    {
+      setState("Drop");
     }
   }
 
@@ -548,13 +513,13 @@ public class Cup extends Thread
     Log.log(getClass().getName() + " is started.");
     try
     {
-      while (BgImage == null)
+      while (bgImage == null)
       {
         sleep(100);
-        BgImage = tetris.createImage(tetris.getSize().width / 2, tetris.getSize().height);
+        bgImage = tetris.createImage(tetris.getSize().width / 2, tetris.getSize().height);
       }
 
-      while (IsAlive)
+      while (isAlive)
       {
         if (!(State.equals("Game") || State.equals("Drop")))
         {
@@ -565,37 +530,37 @@ public class Cup extends Thread
 
         if (!cfIsValid())
         {
-          CurrentFigure.location.y--;
+          currentFigure.location.y--;
           cfMerge();
           if (isLevelComplete())
           {
-            CurrentFigure = null;
+            currentFigure = null;
             paint();
             sleep(500);
-            Prize = 5000 * Level * (Speed + 1);
-            Text = "����";
+            prize = 5000 * level * (speed + 1);
+            message = "����";
             paint();
             sleep(3000);
-            Score += Prize;
-            Prize = 0;
-            Contents = null;
-            Text = null;
+            score += prize;
+            prize = 0;
+            contents = null;
+            message = null;
             paint();
             sleep(500);
-            Level++;
+            level++;
             if (loadLevel())
             {
-              Text = "������� " + Level;
+              message = "������� " + level;
             }
             else
             {
               setState("Victory");
-              tetris.updateScores(PlayerName, Score, true);
+//              tetris.updateScores("", score, true);
               continue;
             }
             paint();
             sleep(2000);
-            Text = null;
+            message = null;
           }
           cfNext();
           if (!cfIsValid())
@@ -603,7 +568,7 @@ public class Cup extends Thread
             setState("Over");
             paint();
             sleep(2000);
-            tetris.updateScores(PlayerName, Score, true);
+//            tetris.updateScores("", score, true);
           }
           else setState("Game");
         }
@@ -614,7 +579,7 @@ public class Cup extends Thread
         else
         {
           int delay = 0;
-          switch (Speed)
+          switch (speed)
           {
             case 0:
               delay = 1500;
@@ -640,7 +605,7 @@ public class Cup extends Thread
           }
         }
 
-        CurrentFigure.location.y++;
+        currentFigure.location.y++;
       }
     }
     catch (Exception e)
@@ -650,15 +615,15 @@ public class Cup extends Thread
     Log.log(getClass().getName() + " is stopped.");
   }
 
-  private void setState(String _NewState)
+  private void setState(String newState)
   {
     PrevState = State;
-    State = _NewState;
+    State = newState;
     IsShouldBeRepainted = true;
   }
 
-  public void setStop()
+  void setStop()
   {
-    IsAlive = false;
+    isAlive = false;
   }
 }

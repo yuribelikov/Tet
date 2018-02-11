@@ -70,8 +70,6 @@ public class Tetris extends Frame implements IEventReceiver
         cup.finishGame();
 
       cup = new Cup(this);
-//      getGraphics().clearRect(0, 0, getSize().width, getSize().height);
-      cup.newGame();
     }
     catch (Exception e)
     {
@@ -94,10 +92,10 @@ public class Tetris extends Frame implements IEventReceiver
 
         for (int n = 0; n < keys.length; n++)
           if (keys[n].equals(keyCode))
-            cup.processAction(actions[n]);
+            cup.move(actions[n]);
 
         if (keyCode.equals("Pause"))
-          cup.processAction("Pause");
+          cup.pause();
       }
 
 // - - - - - - - - menu and window actions - - - - - - -
@@ -108,7 +106,7 @@ public class Tetris extends Frame implements IEventReceiver
       {
         if (cup != null)
         {
-          cup.processAction("Quit");
+          cup.move("Quit");
           cup.finishGame();
         }
         destroy();

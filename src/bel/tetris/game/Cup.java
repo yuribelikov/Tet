@@ -9,9 +9,15 @@ import java.io.ObjectInputStream;
 
 class Cup extends Thread
 {
+  private final static int STATE_GAME = 1;
+  private final static int STATE_PAUSED = 2;
+  private final static int STATE_DROPPING = 3;
+  private final static int STATE_GAME_OVER = 4;
+  private final static int STATE_NO_MORE_LEVELS = 5;
+
   private final static Color[] PALETTE = {null, new Color(222, 222, 222), Color.red, Color.green, Color.blue, Color.yellow, Color.cyan, Color.orange, Color.pink};
   private final static int W = 10, H = 20;    // cup width and height
-  private final static Point START_LOCATION = new Point(3, -2);
+  private final static Point FIGURE_START_POS = new Point(3, -2);
 
   private final Tetris tetris;
   private int[][] contents = new int[H][W];
@@ -21,7 +27,7 @@ class Cup extends Thread
   private int squareSize = 20;
   private Image bgImage = null;
   private String message = null;
-  private String state = "Idle", prevState = null;
+  private int state;
   private boolean isAlive = true;
 
 
@@ -30,27 +36,21 @@ class Cup extends Thread
     super();
 
     this.tetris = tetris;
-    setState("Idle");
-    start();
-  }
-
-  void newGame()
-  {
     loadLevel();
-    nextFigure = new Figure();
-    cfNext();
-
-    setState("Game");
+    currentFigure = new Figure(FIGURE_START_POS);
+    nextFigure = new Figure(FIGURE_START_POS);
+    state = STATE_GAME;
+    start();
   }
 
   private boolean isFigurePositionValid()
   {
-    for (int y = 0; y < currentFigure.getContentsForCurrRotation().length; y++)
-      for (int x = 0; x < currentFigure.getContentsForCurrRotation()[0].length; x++)
+    for (int y = 0; y < Figure.SIZE; y++)
+      for (int x = 0; x < Figure.SIZE; x++)
       {
-        if (!currentFigure.getContentsForCurrRotation()[y][x]) continue;
-        int cx = currentFigure.location.x + x;
-        int cy = currentFigure.location.y + y;
+        if (!currentFigure.getCurrContents()[y][x]) continue;
+        int cx = currentFigure.pos.x + x;
+        int cy = currentFigure.pos.y + y;
         if (cx < 0 || cx >= W) return false;
         if (cy >= H) return false;
         if (cy < 0) continue;
@@ -60,14 +60,14 @@ class Cup extends Thread
     return true;
   }
 
-  private void mergeFigure()
+  private void merge()
   {
-    for (int y = 0; y < currentFigure.getContentsForCurrRotation().length; y++)
-      for (int x = 0; x < currentFigure.getContentsForCurrRotation()[0].length; x++)
+    for (int y = 0; y < Figure.SIZE; y++)
+      for (int x = 0; x < Figure.SIZE; x++)
       {
-        if (!currentFigure.getContentsForCurrRotation()[y][x]) continue;
-        int cx = currentFigure.location.x + x;
-        int cy = currentFigure.location.y + y;
+        if (!currentFigure.getCurrContents()[y][x]) continue;
+        int cx = currentFigure.pos.x + x;
+        int cy = currentFigure.pos.y + y;
         if (cx < 0 || cx >= W) continue;
         if (cy < 0 || cy >= H) continue;
         contents[cy][cx] = 1;
@@ -113,12 +113,10 @@ class Cup extends Thread
     paint();
   }
 
-  private void cfNext()
+  private void nextFigure()
   {
     currentFigure = nextFigure;
-    currentFigure.location.x = START_LOCATION.x;
-    currentFigure.location.y = START_LOCATION.y;
-    nextFigure = new Figure();
+    nextFigure = new Figure(FIGURE_START_POS);
   }
 
   void finishGame()
@@ -150,48 +148,44 @@ class Cup extends Thread
     Font InfoFont = new Font("Dialog", 1, 48);
 
     Dimension scrSize = tetris.getSize();
-
     Graphics g = bgImage.getGraphics();
     g.setColor(Color.black);
-    g.fillRect(0, 0, scrSize.width / 2, scrSize.height);
+    g.fillRect(0, 0, scrSize.width, scrSize.height);
 
-    if (!state.equals("Idle"))
+    g.setColor(cupColor);
+    int w = squareSize * W;
+    int h = squareSize * H;
+    int x = scrSize.width / 4 - w / 2;
+    int y = scrSize.height / 2 - h / 2 + 30;
+    g.fillRect(x - 4, y, 4, h + 4);
+    g.fillRect(x + w, y, 4, h + 4);
+    g.fillRect(x, y + h, w, 4);
+
+    paintContents(g, x, y, mergeColor);
+    paintFigure(currentFigure, g, figureColor, x, y);
+    paintFigure(nextFigure, g, figureColor, x + w, y + h / 2 - squareSize * 2);
+
+    if (message != null)
+      paintText(message, g, messageFont, messageColor, x + w / 2, y + 80);
+
+    paintText("" + level, g, InfoFont, InfoColor, x + w + 50, y + 20);
+    paintText(prize == 0 ? ("" + score) : (score + " + " + prize), g, scoreFont, scoreColor, x + w / 2, y + h);
+    int mx = x + w / 2, my = y + h / 2 - 50;
+    if (prize > 0)
+      paintText("" + prize, g, messageFont, messageColor, mx, my);
+    switch (state)
     {
-      g.setColor(cupColor);
-      int w = squareSize * W;
-      int h = squareSize * H;
-      int x = scrSize.width / 4 - w / 2;
-      int y = scrSize.height / 2 - h / 2 + 30;
-      g.fillRect(x - 4, y, 4, h + 4);
-      g.fillRect(x + w, y, 4, h + 4);
-      g.fillRect(x, y + h, w, 4);
-
-      paintFigure(nextFigure, g, figureColor, x + w + 10, y + h / 2 - squareSize * 2);
-      paintContents(g, x, y, mergeColor);
-      paintFigure(currentFigure, g, figureColor, x, y);
-
-      if (message != null)
-        paintText(message, g, messageFont, messageColor, x + w / 2, y + 80);
-
-      paintText("" + level, g, InfoFont, InfoColor, x + w + 50, y + 20);
-      paintText(prize == 0 ? ("" + score) : (score + " + " + prize), g, scoreFont, scoreColor, x + w / 2, y + h);
-      int mx = x + w / 2, my = y + h / 2 - 50;
-      if (prize > 0)
-        paintText("" + prize, g, messageFont, messageColor, mx, my);
-      switch (state)
-      {
-        case "Pause":
-          paintText("�����", g, messageFont, messageColor, mx, my);
-          break;
-        case "Over":
-          paintText("��", g, messageFont, messageColor, mx, my);
-          paintText("���������", g, messageFont, messageColor, mx, my + 60);
-          break;
-        case "Victory":
-          paintText("��", g, messageFont, messageColor, mx, my);
-          paintText("��������", g, messageFont, messageColor, mx, my + 60);
-          break;
-      }
+      case STATE_PAUSED:
+        paintText("PAUSED", g, messageFont, messageColor, mx, my);
+        break;
+      case STATE_GAME_OVER:
+        paintText("GAME", g, messageFont, messageColor, mx, my);
+        paintText("OVER", g, messageFont, messageColor, mx, my + 60);
+        break;
+      case STATE_NO_MORE_LEVELS:
+        paintText("GET MORE", g, messageFont, messageColor, mx, my);
+        paintText("LEVELS", g, messageFont, messageColor, mx, my + 60);
+        break;
     }
 
     tetris.getGraphics().drawImage(bgImage, scrSize.width / 4, 0, tetris);
@@ -233,21 +227,15 @@ class Cup extends Thread
     }
   }
 
-  private void paintFigure(Figure _Figure, Graphics _G, Color _C, int _X, int _Y)
+  private void paintFigure(Figure figure, Graphics g, Color c, int fx, int fy)
   {
-    if (_Figure == null) return;
+    if (figure == null) return;
 
-    _G.setColor(_C);
-    for (int y = 0; y < _Figure.getContentsForCurrRotation().length; y++)
-      for (int x = 0; x < _Figure.getContentsForCurrRotation()[0].length; x++)
-      {
-        if (_Figure.getContentsForCurrRotation()[y][x])
-        {
-          _G.fillRect(_X + (_Figure.location.x + x) * squareSize,
-          _Y + (_Figure.location.y + y) * squareSize,
-          squareSize, squareSize);
-        }
-      }
+    g.setColor(c);
+    for (int y = 0; y < Figure.SIZE; y++)
+      for (int x = 0; x < Figure.SIZE; x++)
+        if (figure.getCurrContents()[y][x])
+          g.fillRect(fx + (figure.pos.x + x) * squareSize, fy + (figure.pos.y + y) * squareSize, squareSize, squareSize);
   }
 
   private void paintText(String text, Graphics g, Font font, Color color, int x, int y)
@@ -261,47 +249,39 @@ class Cup extends Thread
     g.drawString(text, sx, sy);
   }
 
-  void processAction(String action)
+  void pause()
   {
-    if (action.equals("No"))
+    if (state == STATE_GAME)
+      state = Cup.STATE_PAUSED;
+    else
+      state = STATE_GAME;
+  }
+
+  void move(String action)
+  {
+    if (state != STATE_GAME)
+      return;
+
+    switch (action)
     {
-      state = prevState;
+      case "MoveLeft":
+        currentFigure.pos.x--;
+        if (!isFigurePositionValid()) currentFigure.pos.x++;
+        break;
+      case "MoveRight":
+        currentFigure.pos.x++;
+        if (!isFigurePositionValid()) currentFigure.pos.x--;
+        break;
+      case "Rotate":
+        currentFigure.rotate();
+        if (!isFigurePositionValid()) currentFigure.rotateBack();
+        break;
+      case "Drop":
+        state = STATE_DROPPING;
+        break;
     }
-    else if (action.equals("Pause") && state.equals("Game"))
-    {
-      setState("Pause");
-    }
-    else if (action.equals("Pause") && state.equals("Pause"))
-    {
-      setState("Game");
-    }
-    else if (action.equals("Quit") && state.equals("Game"))
-    {
-      setState("Pause");
-    }
-    else if (action.equals("Quit") && !state.equals("Game"))
-    {
-      setState(state);
-    }
-    else if (action.equals("MoveLeft") && state.equals("Game"))
-    {
-      currentFigure.location.x--;
-      if (!isFigurePositionValid()) currentFigure.location.x++;
-    }
-    else if (action.equals("MoveRight") && state.equals("Game"))
-    {
-      currentFigure.location.x++;
-      if (!isFigurePositionValid()) currentFigure.location.x--;
-    }
-    else if (action.equals("Rotate") && state.equals("Game"))
-    {
-      currentFigure.rotate();
-      if (!isFigurePositionValid()) currentFigure.rotateBack();
-    }
-    else if (action.equals("Drop") && state.equals("Game"))
-    {
-      setState("Drop");
-    }
+
+    paint();
   }
 
   public void run()
@@ -309,68 +289,48 @@ class Cup extends Thread
     System.out.println("Cup is started.");
     try
     {
-      bgImage = tetris.createImage(tetris.getSize().width / 2, tetris.getSize().height);
+      bgImage = tetris.createImage(tetris.getSize().width, tetris.getSize().height);
 
+      paint();
       while (isAlive)
       {
-        if (!(state.equals("Game") || state.equals("Drop")))
-        {
-          paint();
-          sleep(50);
-          continue;
-        }
+//        if (!(state.equals("Game") || state.equals("Drop")))
+//        {
+//          paint();
+//          sleep(50);
+//          continue;
+//        }
 
         if (!isFigurePositionValid())
         {
-          currentFigure.location.y--;
-          mergeFigure();
+          currentFigure.pos.y--;
+          merge();
           if (isLevelComplete())
             nextLevel();
 
-          cfNext();
+          nextFigure();
           if (!isFigurePositionValid())
           {
-            setState("Over");
+            state = STATE_GAME_OVER;
             paint();
-            sleep(2000);
+            sleep(2000);    // TODO: ???
 //            tetris.updateScores("", score, true);
           }
-          else setState("Game");
+          else state = STATE_GAME;      // TODO: ???
         }
 
         paint();
-
-        if (state.equals("Drop")) sleep(10);
+        if (state == STATE_DROPPING)
+          sleepMs(10);
         else
         {
-          int delay = 0;
-          switch (speed)
-          {
-            case 0:
-              delay = 1500;
-              break;
-            case 1:
-              delay = 900;
-              break;
-            case 2:
-              delay = 500;
-              break;
-            case 3:
-              delay = 200;
-              break;
-            case 4:
-              delay = 80;
-              break;
-          }
-          for (int n = 0; n < delay; n++)
-          {
-            if (!state.equals("Game")) break;
+          int delay = 1000 - speed * 450;
+          while (delay-- > 0 && state == STATE_GAME)    // dropping started or paused
             sleep(1);
-            paint();
-          }
         }
 
-        currentFigure.location.y++;
+        currentFigure.pos.y++;
+        paint();
       }
     }
     catch (Exception e)
@@ -384,27 +344,27 @@ class Cup extends Thread
   {
     currentFigure = null;
     paint();
-    sleep(500);
+    sleepMs(500);
     prize = 5000 * level * (speed + 1);
     message = "Bonus";
     paint();
-    sleep(1000);    // TODO: increase to 3000
+    sleepMs(1000);    // TODO: increase to 3000
     score += prize;
     prize = 0;
     contents = null;
     message = null;
     paint();
-    sleep(500);
+    sleepMs(500);
     level++;
     if (loadLevel())
       message = "Next Level: " + level;
     else
     {
-      setState("Victory");
+      state = STATE_NO_MORE_LEVELS;
 //              tetris.updateScores("", score, true);
     }
     paint();
-    sleep(2000);
+    sleepMs(2000);
     message = null;
   }
 
@@ -433,18 +393,14 @@ class Cup extends Thread
   {
     try
     {
-      sleep(ms);
+      while (ms-- > 0 && isAlive)
+        sleep(1);
+
     }
     catch (InterruptedException e)
     {
       e.printStackTrace();
     }
-  }
-
-  private void setState(String newState)
-  {
-    prevState = state;
-    state = newState;
   }
 
   void setStop()

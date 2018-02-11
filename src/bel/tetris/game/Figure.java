@@ -13,15 +13,16 @@ class Figure
   private final static int TYPE_SQUARE = 6;
   private final static int TYPE_LINE = 7;
   private final static int NUMBER = 7;
-  private final static int SIZE = 4;   // figure width/height
+  final static int SIZE = 4;   // figure width/height
 
   private static int[] lastFigures = new int[2];
   private int type;
-  private boolean[][][] contents = null;    // [rotation][y][x]
+  private boolean[][][] contents;    // [rotation][y][x]
   private int rotation = 0;
-  Point location = null;
+  Point pos;
 
-  Figure()
+
+  Figure(Point startPos)
   {
     type = TYPE_UNDEFINED;
     while (type == TYPE_UNDEFINED || (type == lastFigures[0] && type == lastFigures[1]))
@@ -29,12 +30,12 @@ class Figure
 
     lastFigures[0] = lastFigures[1];
     lastFigures[1] = type;
-    location = new Point();
+    pos = new Point(startPos.x, startPos.y);
 //    type = TYPE_LINE;
     createContents();
   }
 
-  boolean[][] getContentsForCurrRotation()
+  boolean[][] getCurrContents()
   {
     return contents[rotation];
   }
@@ -152,6 +153,6 @@ class Figure
 
   public String toString()
   {
-    return "Figure : " + type + " [" + 90 * rotation + "], " + location;
+    return "Figure : " + type + " [" + 90 * rotation + "], " + pos;
   }
 }

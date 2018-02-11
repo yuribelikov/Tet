@@ -9,16 +9,14 @@ import java.io.ObjectInputStream;
 
 class Cup extends Thread
 {
-  private final static String FIGURES[] = {"LStair", "RStair", "Podium", "LCorner", "RCorner", "Square", "Line"};
   private final static Color[] PALETTE = {null, new Color(222, 222, 222), Color.red, Color.green, Color.blue, Color.yellow, Color.cyan, Color.orange, Color.pink};
-  private final static int W = 10, H = 20, F = 4;    // cup width and height, figure width/height
+  private final static int W = 10, H = 20;    // cup width and height
   private final static Point START_LOCATION = new Point(3, -2);
 
   private final Tetris tetris;
   private int[][] contents = new int[H][W];
   private Figure currentFigure = null, nextFigure = null;
 
-  private int[] lastFigures = null;
   private int speed = 0, level = 1, score = 0, prize = 0;
   private int squareSize = 20;
   private Image bgImage = null;
@@ -32,7 +30,6 @@ class Cup extends Thread
     super();
 
     this.tetris = tetris;
-    lastFigures = new int[2];
     setState("Idle");
     start();
   }
@@ -40,96 +37,80 @@ class Cup extends Thread
   void newGame()
   {
     loadLevel();
-    nextFigure = generateFigure();
+    nextFigure = new Figure();
     cfNext();
 
     setState("Game");
   }
 
-  private boolean cfIsValid()
+  private boolean isFigurePositionValid()
   {
-    try
-    {
-      for (int y = 0; y < currentFigure.getContentsForCurrRotation().length; y++)
-        for (int x = 0; x < currentFigure.getContentsForCurrRotation()[0].length; x++)
-        {
-          if (!currentFigure.getContentsForCurrRotation()[y][x]) continue;
-          int cx = currentFigure.location.x + x;
-          int cy = currentFigure.location.y + y;
-          if (cx < 0 || cx >= W) return false;
-          if (cy >= H) return false;
-          if (cy < 0) continue;
-          if (contents[cy][cx] > 0) return false;
-        }
+    for (int y = 0; y < currentFigure.getContentsForCurrRotation().length; y++)
+      for (int x = 0; x < currentFigure.getContentsForCurrRotation()[0].length; x++)
+      {
+        if (!currentFigure.getContentsForCurrRotation()[y][x]) continue;
+        int cx = currentFigure.location.x + x;
+        int cy = currentFigure.location.y + y;
+        if (cx < 0 || cx >= W) return false;
+        if (cy >= H) return false;
+        if (cy < 0) continue;
+        if (contents[cy][cx] > 0) return false;
+      }
 
-      return true;
-    }
-    catch (Exception e)
-    {
-      Log.err(getClass().getName() + ".cfIsValid() error : " + e);
-    }
-
-    return false;
+    return true;
   }
 
-  private void cfMerge()
+  private void mergeFigure()
   {
-    try
-    {
-      for (int y = 0; y < currentFigure.getContentsForCurrRotation().length; y++)
-        for (int x = 0; x < currentFigure.getContentsForCurrRotation()[0].length; x++)
-        {
-          if (!currentFigure.getContentsForCurrRotation()[y][x]) continue;
-          int cx = currentFigure.location.x + x;
-          int cy = currentFigure.location.y + y;
-          if (cx < 0 || cx >= W) continue;
-          if (cy < 0 || cy >= H) continue;
-          contents[cy][cx] = 1;
-        }
+    for (int y = 0; y < currentFigure.getContentsForCurrRotation().length; y++)
+      for (int x = 0; x < currentFigure.getContentsForCurrRotation()[0].length; x++)
+      {
+        if (!currentFigure.getContentsForCurrRotation()[y][x]) continue;
+        int cx = currentFigure.location.x + x;
+        int cy = currentFigure.location.y + y;
+        if (cx < 0 || cx >= W) continue;
+        if (cy < 0 || cy >= H) continue;
+        contents[cy][cx] = 1;
+      }
 
-      int completedRowsQ = 0;
-      boolean[] completedRows = new boolean[H];
+    int completedRowsQ = 0;
+    boolean[] completedRows = new boolean[H];
+    for (int y = 0; y < H; y++)
+    {
+      boolean isRowComplete = true;
+      for (int x = 0; x < W; x++)
+      {
+        if (contents[y][x] == 0)
+        {
+          isRowComplete = false;
+          break;
+        }
+      }
+      completedRows[y] = isRowComplete;
+      if (isRowComplete) completedRowsQ++;
+    }
+
+    if (completedRowsQ > 0)
+    {
+      prize = 100 * completedRowsQ * completedRowsQ * level * (speed + 1);
+      paint();
+      sleepMs(500);
+      score += prize;
+      prize = 0;
       for (int y = 0; y < H; y++)
       {
-        boolean isRowComplete = true;
-        for (int x = 0; x < W; x++)
+        if (completedRows[y])
         {
-          if (contents[y][x] == 0)
-          {
-            isRowComplete = false;
-            break;
-          }
-        }
-        completedRows[y] = isRowComplete;
-        if (isRowComplete) completedRowsQ++;
-      }
-
-      if (completedRowsQ > 0)
-      {
-        prize = 100 * completedRowsQ * completedRowsQ * level * (speed + 1);
-        paint();
-        sleep(500);
-        score += prize;
-        prize = 0;
-        for (int y = 0; y < H; y++)
-        {
-          if (completedRows[y])
-          {
-            int[][] contents = new int[H][W];
-            System.arraycopy(this.contents, 0, contents, 1, y);
-            System.arraycopy(this.contents, y + 1, contents, y + 1, H - y - 1);
-            this.contents = contents;
-            for (int x = 0; x < W; x++) this.contents[0][x] = 0;
-          }
+          int[][] contents = new int[H][W];
+          System.arraycopy(this.contents, 0, contents, 1, y);
+          System.arraycopy(this.contents, y + 1, contents, y + 1, H - y - 1);
+          this.contents = contents;
+          for (int x = 0; x < W; x++) this.contents[0][x] = 0;
         }
       }
+    }
 
-      paint();
-    }
-    catch (Exception e)
-    {
-      e.printStackTrace();
-    }
+    paint();
   }
 
   private void cfNext()
@@ -137,155 +118,13 @@ class Cup extends Thread
     currentFigure = nextFigure;
     currentFigure.location.x = START_LOCATION.x;
     currentFigure.location.y = START_LOCATION.y;
-    nextFigure = generateFigure();
+    nextFigure = new Figure();
   }
 
   void finishGame()
   {
 //    tetris.updateScores("", score, false);
     setStop();
-  }
-
-  private Figure generateFigure()
-  {
-    int type = -1;
-    while (type < 0 || (type == lastFigures[0] && type == lastFigures[1]))
-      type = (int) Math.round((FIGURES.length - 1) * Math.random());
-
-    lastFigures[0] = lastFigures[1];
-    lastFigures[1] = type;
-    Figure figure = new Figure();
-    figure.type = FIGURES[type];
-    figure.type = "Line";
-    figure.location = new Point();
-    figure.contents = new boolean[4][F][F];
-
-    switch (figure.type)
-    {
-      case "LStair":
-        figure.contents[0][1][2] = figure.contents[0][1][3] =                //  xx
-                figure.contents[0][2][1] = figure.contents[0][2][2] = true;            // xx
-
-
-        figure.contents[1][1][1] =                                          // x
-                figure.contents[1][2][1] = figure.contents[1][2][2] =                // xx
-                        figure.contents[1][3][2] = true;                                    //  x
-
-
-        figure.contents[2][1][2] = figure.contents[2][1][3] =                //  xx
-                figure.contents[2][2][1] = figure.contents[2][2][2] = true;            // xx
-
-
-        figure.contents[3][1][1] =                                          // x
-                figure.contents[3][2][1] = figure.contents[3][2][2] =                // xx
-                        figure.contents[3][3][2] = true;                                    //  x
-
-        break;
-      case "RStair":
-        figure.contents[0][1][0] = figure.contents[0][1][1] =                // xx
-                figure.contents[0][2][1] = figure.contents[0][2][2] = true;            //  xx
-
-
-        figure.contents[1][1][2] =                                          //  x
-                figure.contents[1][2][1] = figure.contents[1][2][2] =                // xx
-                        figure.contents[1][3][1] = true;                                    // x
-
-
-        figure.contents[2][1][0] = figure.contents[2][1][1] =                // xx
-                figure.contents[2][2][1] = figure.contents[2][2][2] = true;            //  xx
-
-
-        figure.contents[3][1][2] =                                          //  x
-                figure.contents[3][2][1] = figure.contents[3][2][2] =                // xx
-                        figure.contents[3][3][1] = true;                                    // x
-
-        break;
-      case "Podium":
-        figure.contents[0][1][2] =                                          //   x
-                figure.contents[0][2][1] = figure.contents[0][2][2] =                //  xx
-                        figure.contents[0][3][2] = true;                                    //   x
-
-
-        figure.contents[1][1][1] =                                                              //  x
-                figure.contents[1][2][0] = figure.contents[1][2][1] = figure.contents[1][2][2] = true;      // xxx
-
-
-        figure.contents[2][1][1] =                                          //  x
-                figure.contents[2][2][1] = figure.contents[2][2][2] =                //  xx
-                        figure.contents[2][3][1] = true;                                    //  x
-
-
-        figure.contents[3][1][0] = figure.contents[3][1][1] = figure.contents[3][1][2] =            // xxx
-                figure.contents[3][2][1] = true;                                                        //  x
-
-        break;
-      case "LCorner":
-        figure.contents[0][1][1] = figure.contents[0][1][2] =                //  xx
-                figure.contents[0][2][2] =                                          //   x
-                        figure.contents[0][3][2] = true;                                    //   x
-
-
-        figure.contents[1][1][2] =                                                              //   x
-                figure.contents[1][2][0] = figure.contents[1][2][1] = figure.contents[1][2][2] = true;      // xxx
-
-
-        figure.contents[2][1][1] =                                          //  x
-                figure.contents[2][2][1] =                                          //  x
-                        figure.contents[2][3][1] = figure.contents[2][3][2] = true;            //  xx
-
-
-        figure.contents[3][1][0] = figure.contents[3][1][1] = figure.contents[3][1][2] =            // xxx
-                figure.contents[3][2][0] = true;                                                        // x
-
-        break;
-      case "RCorner":
-        figure.contents[0][1][1] = figure.contents[0][1][2] =                //  xx
-                figure.contents[0][2][1] =                                          //  x
-                        figure.contents[0][3][1] = true;                                    //  x
-
-
-        figure.contents[1][1][0] = figure.contents[1][1][1] = figure.contents[1][1][2] =            // xxx
-                figure.contents[1][2][2] = true;                                                        //   x
-
-
-        figure.contents[2][1][2] =                                          //   x
-                figure.contents[2][2][2] =                                          //   x
-                        figure.contents[2][3][1] = figure.contents[2][3][2] = true;            //  xx
-
-
-        figure.contents[3][1][0] =                                                              // x
-                figure.contents[3][2][0] = figure.contents[3][2][1] = figure.contents[3][2][2] = true;      // xxx
-
-        break;
-      case "Square":
-        for (int n = 0; n < 4; n++)
-        {
-          figure.contents[n][1][1] = figure.contents[n][1][2] =                                      //  xx
-                  figure.contents[n][2][1] = figure.contents[n][2][2] = true;                                  //  xx
-        }
-        break;
-      case "Line":
-        figure.contents[0][2][0] = figure.contents[0][2][1] = figure.contents[0][2][2] = figure.contents[0][2][3] = true;    //  xxxx
-
-
-        figure.contents[1][0][2] =                                                            //  x
-                figure.contents[1][1][2] =                                                            //  x
-                        figure.contents[1][2][2] =                                                            //  x
-                                figure.contents[1][3][2] = true;                                                      //  x
-
-
-        figure.contents[2][2][0] = figure.contents[2][2][1] = figure.contents[2][2][2] = figure.contents[2][2][3] = true;    //  xxxx
-
-
-        figure.contents[3][0][2] = true;                                                            //  x
-        figure.contents[3][1][2] = true;                                                            //  x
-        figure.contents[3][2][2] = true;                                                            //  x
-        figure.contents[3][3][2] = true;                                                            //  x
-
-        break;
-    }
-
-    return figure;
   }
 
   private boolean isLevelComplete()
@@ -382,8 +221,8 @@ class Cup extends Thread
             if (isRowComplete) _G.setColor(mergeColor);
             else _G.setColor(PALETTE[contents[y][x]]);
             _G.fillRect(_X + x * squareSize,
-                    _Y + y * squareSize,
-                    squareSize, squareSize);
+            _Y + y * squareSize,
+            squareSize, squareSize);
           }
         }
       }
@@ -405,8 +244,8 @@ class Cup extends Thread
         if (_Figure.getContentsForCurrRotation()[y][x])
         {
           _G.fillRect(_X + (_Figure.location.x + x) * squareSize,
-                  _Y + (_Figure.location.y + y) * squareSize,
-                  squareSize, squareSize);
+          _Y + (_Figure.location.y + y) * squareSize,
+          squareSize, squareSize);
         }
       }
   }
@@ -447,17 +286,17 @@ class Cup extends Thread
     else if (action.equals("MoveLeft") && state.equals("Game"))
     {
       currentFigure.location.x--;
-      if (!cfIsValid()) currentFigure.location.x++;
+      if (!isFigurePositionValid()) currentFigure.location.x++;
     }
     else if (action.equals("MoveRight") && state.equals("Game"))
     {
       currentFigure.location.x++;
-      if (!cfIsValid()) currentFigure.location.x--;
+      if (!isFigurePositionValid()) currentFigure.location.x--;
     }
     else if (action.equals("Rotate") && state.equals("Game"))
     {
       currentFigure.rotate();
-      if (!cfIsValid()) currentFigure.rotateBack();
+      if (!isFigurePositionValid()) currentFigure.rotateBack();
     }
     else if (action.equals("Drop") && state.equals("Game"))
     {
@@ -481,15 +320,15 @@ class Cup extends Thread
           continue;
         }
 
-        if (!cfIsValid())
+        if (!isFigurePositionValid())
         {
           currentFigure.location.y--;
-          cfMerge();
+          mergeFigure();
           if (isLevelComplete())
             nextLevel();
 
           cfNext();
-          if (!cfIsValid())
+          if (!isFigurePositionValid())
           {
             setState("Over");
             paint();
@@ -568,6 +407,7 @@ class Cup extends Thread
     sleep(2000);
     message = null;
   }
+
   private boolean loadLevel()
   {
     try
@@ -587,6 +427,18 @@ class Cup extends Thread
       e.printStackTrace();
     }
     return false;
+  }
+
+  private void sleepMs(long ms)
+  {
+    try
+    {
+      sleep(ms);
+    }
+    catch (InterruptedException e)
+    {
+      e.printStackTrace();
+    }
   }
 
   private void setState(String newState)

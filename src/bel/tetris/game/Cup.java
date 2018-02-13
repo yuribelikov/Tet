@@ -23,11 +23,11 @@ class Cup extends Thread
   private int[][] contents = new int[H][W];
   private Figure currentFigure = null, nextFigure = null;
 
-  private int speed = 0, level = 1, score = 0, prize = 0;
+  private int speed = 1, level = 1, score = 0, prize = 0;
   private int squareSize = 20;
   private Image bgImage = null;
   private String message = null;
-  private int state;
+  private int state = STATE_GAME;
   private boolean isAlive = true;
 
 
@@ -39,8 +39,54 @@ class Cup extends Thread
     loadLevel();
     currentFigure = new Figure(FIGURE_START_POS);
     nextFigure = new Figure(FIGURE_START_POS);
-    state = STATE_GAME;
     start();
+  }
+
+  public void run()
+  {
+    System.out.println("Cup is started.");
+    try
+    {
+      bgImage = tetris.createImage(tetris.getSize().width, tetris.getSize().height);
+
+      while (isAlive)
+      {
+        paint();
+        if (state == STATE_DROPPING)
+          sleepMs(10);
+        else
+        {
+          int delay = 1000 - speed * 450;
+          while (delay-- > 0 && state == STATE_GAME)    // dropping started or paused
+            sleep(1);
+        }
+
+        currentFigure.pos.y++;
+        if (isFigurePositionValid())      // end of normal loop
+          continue;
+
+        currentFigure.pos.y--;    // figure has reached a bottom shape
+        merge();
+        if (isLevelComplete())
+          nextLevel();
+
+        nextFigure();
+        if (!isFigurePositionValid())
+        {
+          state = STATE_GAME_OVER;
+          paint();
+          sleep(2000);    // TODO: ???
+//            tetris.updateScores("", score, true);
+        }
+        else if (state == STATE_DROPPING)
+          state = STATE_GAME;
+      }
+    }
+    catch (Exception e)
+    {
+      e.printStackTrace();
+    }
+    System.out.println("Cup is stopped.");
   }
 
   private boolean isFigurePositionValid()
@@ -73,33 +119,33 @@ class Cup extends Thread
         contents[cy][cx] = 1;
       }
 
-    int completedRowsQ = 0;
-    boolean[] completedRows = new boolean[H];
+    int mergedRowsQ = 0;
+    boolean[] mergedRows = new boolean[H];
     for (int y = 0; y < H; y++)
     {
       boolean isRowComplete = true;
       for (int x = 0; x < W; x++)
-      {
         if (contents[y][x] == 0)
         {
           isRowComplete = false;
           break;
         }
-      }
-      completedRows[y] = isRowComplete;
-      if (isRowComplete) completedRowsQ++;
+
+      mergedRows[y] = isRowComplete;
+      if (isRowComplete)
+        mergedRowsQ++;
     }
 
-    if (completedRowsQ > 0)
+    if (mergedRowsQ > 0)
     {
-      prize = 100 * completedRowsQ * completedRowsQ * level * (speed + 1);
+      prize = 100 * mergedRowsQ * mergedRowsQ * level * (speed + 1);
       paint();
       sleepMs(500);
       score += prize;
       prize = 0;
+
       for (int y = 0; y < H; y++)
-      {
-        if (completedRows[y])
+        if (mergedRows[y])
         {
           int[][] contents = new int[H][W];
           System.arraycopy(this.contents, 0, contents, 1, y);
@@ -107,7 +153,6 @@ class Cup extends Thread
           this.contents = contents;
           for (int x = 0; x < W; x++) this.contents[0][x] = 0;
         }
-      }
     }
 
     paint();
@@ -282,62 +327,6 @@ class Cup extends Thread
     }
 
     paint();
-  }
-
-  public void run()
-  {
-    System.out.println("Cup is started.");
-    try
-    {
-      bgImage = tetris.createImage(tetris.getSize().width, tetris.getSize().height);
-
-      paint();
-      while (isAlive)
-      {
-//        if (!(state.equals("Game") || state.equals("Drop")))
-//        {
-//          paint();
-//          sleep(50);
-//          continue;
-//        }
-
-        if (!isFigurePositionValid())
-        {
-          currentFigure.pos.y--;
-          merge();
-          if (isLevelComplete())
-            nextLevel();
-
-          nextFigure();
-          if (!isFigurePositionValid())
-          {
-            state = STATE_GAME_OVER;
-            paint();
-            sleep(2000);    // TODO: ???
-//            tetris.updateScores("", score, true);
-          }
-          else state = STATE_GAME;      // TODO: ???
-        }
-
-        paint();
-        if (state == STATE_DROPPING)
-          sleepMs(10);
-        else
-        {
-          int delay = 1000 - speed * 450;
-          while (delay-- > 0 && state == STATE_GAME)    // dropping started or paused
-            sleep(1);
-        }
-
-        currentFigure.pos.y++;
-        paint();
-      }
-    }
-    catch (Exception e)
-    {
-      e.printStackTrace();
-    }
-    System.out.println("Cup is stopped.");
   }
 
   private void nextLevel() throws Exception

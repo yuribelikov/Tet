@@ -19,7 +19,6 @@ public class Tetris extends Frame implements IEventReceiver
     try
     {
       app.init();
-      app.showSelf();
     }
     catch (Exception e)
     {
@@ -55,21 +54,16 @@ public class Tetris extends Frame implements IEventReceiver
       newGameMI.addActionListener(eventListener);
       gameMenu.addSeparator();
 
-    }
-    catch (Exception e)
-    {
-      e.printStackTrace();
-    }
-  }
+      Dimension d = getToolkit().getScreenSize();
+      int w = 800;
+      int h = 540;
+      int x = d.width / 2 - w / 2;
+      int y = d.height / 2 - h / 2;// y=0;
+      if (x < 0) x = 0;
+      if (y < 0) y = 0;
+      setBounds(x, y, w, h);
+      setVisible(true);
 
-  private void newGame()
-  {
-    try
-    {
-      if (cup != null)
-        cup.finishGame();
-
-      cup = new Cup(this);
     }
     catch (Exception e)
     {
@@ -100,7 +94,12 @@ public class Tetris extends Frame implements IEventReceiver
 
 // - - - - - - - - menu and window actions - - - - - - -
       if (evt.getName().equals("ActionPerformed") && evt.getSourceName().equals("NewGame"))
-        newGame();
+      {
+        if (cup != null)
+          cup.finishGame();
+
+        cup = new Cup(this);
+      }
 
       if (evt.getName().equals("WindowClosing"))
       {
@@ -116,19 +115,6 @@ public class Tetris extends Frame implements IEventReceiver
     {
       e.printStackTrace();
     }
-  }
-
-  private void showSelf()
-  {
-    Dimension d = getToolkit().getScreenSize();
-    int w = 800;
-    int h = 540;
-    int x = d.width / 2 - w / 2;
-    int y = d.height / 2 - h / 2;// y=0;
-    if (x < 0) x = 0;
-    if (y < 0) y = 0;
-    setBounds(x, y, w, h);
-    setVisible(true);
   }
 
   private void destroy()

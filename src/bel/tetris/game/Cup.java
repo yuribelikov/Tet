@@ -1,7 +1,5 @@
 package bel.tetris.game;
 
-import lib.util.Log;
-
 import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,25 +7,21 @@ import java.io.ObjectInputStream;
 
 class Cup extends Thread
 {
-  private final static int STATE_GAME = 1;
-  private final static int STATE_PAUSED = 2;
-  private final static int STATE_DROPPING = 3;
-  private final static int STATE_GAME_OVER = 4;
-  private final static int STATE_NO_MORE_LEVELS = 5;
-
-  private final static Color[] PALETTE = {null, new Color(222, 222, 222), Color.red, Color.green, Color.blue, Color.yellow, Color.cyan, Color.orange, Color.pink};
-  private final static int W = 10, H = 20;    // cup width and height
+  final static int STATE_GAME = 1;
+  final static int STATE_PAUSED = 2;
+  final static int STATE_DROPPING = 3;
+  final static int STATE_GAME_OVER = 4;
+  final static int STATE_NO_MORE_LEVELS = 5;
+  final static int W = 10, H = 20;    // cup width and height
   private final static Point FIGURE_START_POS = new Point(3, -2);
 
-  private final Tetris tetris;
-  private int[][] contents = new int[H][W];
-  private Figure currentFigure = null, nextFigure = null;
-
-  private int speed = 1, level = 1, score = 0, prize = 0;
-  private int squareSize = 20;
-  private Image bgImage = null;
-  private String message = null;
-  private int state = STATE_GAME;
+  private final Painter painter;
+  int state = STATE_GAME;
+  int[][] contents = new int[H][W];
+  Figure currentFigure = null, nextFigure = null;
+  private int speed = 1;
+  int level = 1, score = 0, prize = 0;
+  String message = null;
   private boolean isAlive = true;
 
 
@@ -35,10 +29,11 @@ class Cup extends Thread
   {
     super();
 
-    this.tetris = tetris;
     loadLevel();
     currentFigure = new Figure(FIGURE_START_POS);
     nextFigure = new Figure(FIGURE_START_POS);
+
+    painter = new Painter(this, tetris);
     start();
   }
 
@@ -47,11 +42,9 @@ class Cup extends Thread
     System.out.println("Cup is started.");
     try
     {
-      bgImage = tetris.createImage(tetris.getSize().width, tetris.getSize().height);
-
       while (isAlive)
       {
-        paint();
+        painter.paint();
         if (state == STATE_DROPPING)
           sleepMs(10);
         else
@@ -74,9 +67,8 @@ class Cup extends Thread
         if (!isFigurePositionValid())
         {
           state = STATE_GAME_OVER;
-          paint();
-          sleep(2000);    // TODO: ???
-//            tetris.updateScores("", score, true);
+          painter.paint();
+          finishGame();
         }
         else if (state == STATE_DROPPING)
           state = STATE_GAME;
@@ -123,23 +115,15 @@ class Cup extends Thread
     boolean[] mergedRows = new boolean[H];
     for (int y = 0; y < H; y++)
     {
-      boolean isRowComplete = true;
-      for (int x = 0; x < W; x++)
-        if (contents[y][x] == 0)
-        {
-          isRowComplete = false;
-          break;
-        }
-
-      mergedRows[y] = isRowComplete;
-      if (isRowComplete)
+      mergedRows[y] = isRowComplete(y);
+      if (mergedRows[y])
         mergedRowsQ++;
     }
 
     if (mergedRowsQ > 0)
     {
       prize = 100 * mergedRowsQ * mergedRowsQ * level * (speed + 1);
-      paint();
+      painter.paint();
       sleepMs(500);
       score += prize;
       prize = 0;
@@ -155,7 +139,7 @@ class Cup extends Thread
         }
     }
 
-    paint();
+    painter.paint();
   }
 
   private void nextFigure()
@@ -178,120 +162,6 @@ class Cup extends Thread
           return false;
 
     return true;
-  }
-
-  public synchronized void paint()
-  {
-    Color cupColor = new Color(150, 150, 255);
-    Color figureColor = new Color(180, 255, 180);
-    Color mergeColor = new Color(255, 150, 255);
-    Color scoreColor = new Color(220, 220, 255);
-    Font scoreFont = new Font("Dialog", 1, 24);
-    Color messageColor = new Color(255, 255, 150);
-    Font messageFont = new Font("Dialog", 1, 60);
-    Color InfoColor = new Color(220, 220, 240);
-    Font InfoFont = new Font("Dialog", 1, 48);
-
-    Dimension scrSize = tetris.getSize();
-    Graphics g = bgImage.getGraphics();
-    g.setColor(Color.black);
-    g.fillRect(0, 0, scrSize.width, scrSize.height);
-
-    g.setColor(cupColor);
-    int w = squareSize * W;
-    int h = squareSize * H;
-    int x = scrSize.width / 4 - w / 2;
-    int y = scrSize.height / 2 - h / 2 + 30;
-    g.fillRect(x - 4, y, 4, h + 4);
-    g.fillRect(x + w, y, 4, h + 4);
-    g.fillRect(x, y + h, w, 4);
-
-    paintContents(g, x, y, mergeColor);
-    paintFigure(currentFigure, g, figureColor, x, y);
-    paintFigure(nextFigure, g, figureColor, x + w, y + h / 2 - squareSize * 2);
-
-    if (message != null)
-      paintText(message, g, messageFont, messageColor, x + w / 2, y + 80);
-
-    paintText("" + level, g, InfoFont, InfoColor, x + w + 50, y + 20);
-    paintText(prize == 0 ? ("" + score) : (score + " + " + prize), g, scoreFont, scoreColor, x + w / 2, y + h);
-    int mx = x + w / 2, my = y + h / 2 - 50;
-    if (prize > 0)
-      paintText("" + prize, g, messageFont, messageColor, mx, my);
-    switch (state)
-    {
-      case STATE_PAUSED:
-        paintText("PAUSED", g, messageFont, messageColor, mx, my);
-        break;
-      case STATE_GAME_OVER:
-        paintText("GAME", g, messageFont, messageColor, mx, my);
-        paintText("OVER", g, messageFont, messageColor, mx, my + 60);
-        break;
-      case STATE_NO_MORE_LEVELS:
-        paintText("GET MORE", g, messageFont, messageColor, mx, my);
-        paintText("LEVELS", g, messageFont, messageColor, mx, my + 60);
-        break;
-    }
-
-    tetris.getGraphics().drawImage(bgImage, scrSize.width / 4, 0, tetris);
-  }
-
-  private void paintContents(Graphics _G, int _X, int _Y, Color mergeColor)
-  {
-    try
-    {
-      if (contents == null) return;
-
-      for (int y = 0; y < H; y++)
-      {
-        boolean isRowComplete = true;
-        for (int x = 0; x < W; x++)
-        {
-          if (contents[y][x] == 0)
-          {
-            isRowComplete = false;
-            break;
-          }
-        }
-        for (int x = 0; x < W; x++)
-        {
-          if (contents[y][x] > 0)
-          {
-            if (isRowComplete) _G.setColor(mergeColor);
-            else _G.setColor(PALETTE[contents[y][x]]);
-            _G.fillRect(_X + x * squareSize,
-            _Y + y * squareSize,
-            squareSize, squareSize);
-          }
-        }
-      }
-    }
-    catch (Exception e)
-    {
-      Log.err(getClass().getName() + ".paintContents() error : " + e);
-    }
-  }
-
-  private void paintFigure(Figure figure, Graphics g, Color c, int fx, int fy)
-  {
-    if (figure == null) return;
-
-    g.setColor(c);
-    for (int y = 0; y < Figure.SIZE; y++)
-      for (int x = 0; x < Figure.SIZE; x++)
-        if (figure.getCurrContents()[y][x])
-          g.fillRect(fx + (figure.pos.x + x) * squareSize, fy + (figure.pos.y + y) * squareSize, squareSize, squareSize);
-  }
-
-  private void paintText(String text, Graphics g, Font font, Color color, int x, int y)
-  {
-    g.setFont(font);
-    g.setColor(color);
-    int sw = g.getFontMetrics().stringWidth(text);
-    int sh = g.getFontMetrics().getHeight();
-    int sx = x - sw / 2;
-    int sy = y + sh + 5;
-    g.drawString(text, sx, sy);
   }
 
   void pause()
@@ -326,23 +196,22 @@ class Cup extends Thread
         break;
     }
 
-    paint();
+    painter.paint();
   }
 
   private void nextLevel() throws Exception
   {
     currentFigure = null;
-    paint();
+    painter.paint();
     sleepMs(500);
     prize = 5000 * level * (speed + 1);
     message = "Bonus";
-    paint();
+    painter.paint();
     sleepMs(1000);    // TODO: increase to 3000
     score += prize;
     prize = 0;
-    contents = null;
     message = null;
-    paint();
+    painter.paint();
     sleepMs(500);
     level++;
     if (loadLevel())
@@ -352,9 +221,18 @@ class Cup extends Thread
       state = STATE_NO_MORE_LEVELS;
 //              tetris.updateScores("", score, true);
     }
-    paint();
+    painter.paint();
     sleepMs(2000);
     message = null;
+  }
+
+  boolean isRowComplete(int row)
+  {
+    for (int x = 0; x < W; x++)
+      if (contents[row][x] == 0)
+        return false;
+
+    return true;
   }
 
   private boolean loadLevel()

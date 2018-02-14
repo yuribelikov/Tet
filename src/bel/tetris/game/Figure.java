@@ -14,6 +14,7 @@ class Figure
   private final static int TYPE_LINE = 7;
   private final static int NUMBER = 7;
   final static int SIZE = 4;   // figure width/height
+  private final static Point START_POS = new Point(3, -2);
 
   private static int[] lastFigures = new int[2];
   private int type;
@@ -22,7 +23,7 @@ class Figure
   Point pos;
 
 
-  Figure(Point startPos)
+  Figure()
   {
     type = TYPE_UNDEFINED;
     while (type == TYPE_UNDEFINED || (type == lastFigures[0] && type == lastFigures[1]))
@@ -30,7 +31,7 @@ class Figure
 
     lastFigures[0] = lastFigures[1];
     lastFigures[1] = type;
-    pos = new Point(startPos.x, startPos.y);
+    pos = new Point(START_POS.x, START_POS.y);
 //    type = TYPE_LINE;
     createContents();
   }

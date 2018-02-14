@@ -9,7 +9,7 @@ import java.awt.event.KeyEvent;
 
 public class Tetris extends Frame implements IEventReceiver
 {
-  private Cup cup = null;
+  private Game game = null;
 
 
   public static void main(String[] args)
@@ -86,27 +86,27 @@ public class Tetris extends Frame implements IEventReceiver
 
         for (int n = 0; n < keys.length; n++)
           if (keys[n].equals(keyCode))
-            cup.move(actions[n]);
+            game.move(actions[n]);
 
         if (keyCode.equals("Pause"))
-          cup.pause();
+          game.pause();
       }
 
 // - - - - - - - - menu and window actions - - - - - - -
       if (evt.getName().equals("ActionPerformed") && evt.getSourceName().equals("NewGame"))
       {
-        if (cup != null)
-          cup.finishGame();
+        if (game != null)
+          game.finishGame();
 
-        cup = new Cup(this);
+        game = new Game(this);
       }
 
       if (evt.getName().equals("WindowClosing"))
       {
-        if (cup != null)
+        if (game != null)
         {
-          cup.move("Quit");
-          cup.finishGame();
+          game.move("Quit");
+          game.finishGame();
         }
         destroy();
       }
@@ -121,8 +121,8 @@ public class Tetris extends Frame implements IEventReceiver
   {
     try
     {
-      if (cup != null)
-        cup.setStop();
+      if (game != null)
+        game.setStop();
       dispose();
       System.exit(0);
     }

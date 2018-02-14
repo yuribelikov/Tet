@@ -5,7 +5,7 @@ import java.awt.*;
 class Painter
 {
   private final Tetris tetris;
-  private final Cup cup;
+  private final Game game;
   private final static int SQUARE_SIZE = 20;
 
   private final Image bgImage;
@@ -21,10 +21,10 @@ class Painter
   private Color InfoColor = new Color(220, 220, 240);
   private Font InfoFont = new Font("Dialog", 1, 48);
 
-  Painter(Cup cup, Tetris tetris)
+  Painter(Tetris tetris, Game game)
   {
-    this.cup = cup;
     this.tetris = tetris;
+    this.game = game;
     bgImage = tetris.createImage(tetris.getSize().width, tetris.getSize().height);
   }
 
@@ -44,28 +44,28 @@ class Painter
     g.fillRect(x, y + h, w, 4);
 
     paintContents(g, x, y);
-    paintFigure(cup.currentFigure, g, figureColor, x, y);
-    paintFigure(cup.nextFigure, g, figureColor, x + w, y + h / 2 - SQUARE_SIZE * 2);
+    paintFigure(game.currentFigure, g, figureColor, x, y);
+    paintFigure(game.nextFigure, g, figureColor, x + w, y + h / 2 - SQUARE_SIZE * 2);
 
-    if (cup.message != null)
-      paintText(cup.message, g, messageFont, messageColor, x + w / 2, y + 80);
+    if (game.message != null)
+      paintText(game.message, g, messageFont, messageColor, x + w / 2, y + 80);
 
-    paintText("" + cup.level, g, InfoFont, InfoColor, x + w + 50, y + 20);
-    paintText(cup.prize == 0 ? ("" + cup.score) : (cup.score + " + " + cup.prize), g, scoreFont, scoreColor, x + w / 2, y + h);
+    paintText("" + game.level, g, InfoFont, InfoColor, x + w + 50, y + 20);
+    paintText(game.prize == 0 ? ("" + game.score) : (game.score + " + " + game.prize), g, scoreFont, scoreColor, x + w / 2, y + h);
     int mx = x + w / 2, my = y + h / 2 - 50;
-    if (cup.prize > 0)
-      paintText("" + cup.prize, g, messageFont, messageColor, mx, my);
+    if (game.prize > 0)
+      paintText("" + game.prize, g, messageFont, messageColor, mx, my);
 
-    switch (cup.state)
+    switch (game.state)
     {
-      case Cup.STATE_PAUSED:
+      case Game.STATE_PAUSED:
         paintText("PAUSED", g, messageFont, messageColor, mx, my);
         break;
-      case Cup.STATE_GAME_OVER:
+      case Game.STATE_GAME_OVER:
         paintText("GAME", g, messageFont, messageColor, mx, my);
         paintText("OVER", g, messageFont, messageColor, mx, my + 60);
         break;
-      case Cup.STATE_NO_MORE_LEVELS:
+      case Game.STATE_NO_MORE_LEVELS:
         paintText("GET MORE", g, messageFont, messageColor, mx, my);
         paintText("LEVELS", g, messageFont, messageColor, mx, my + 60);
         break;
@@ -78,11 +78,11 @@ class Painter
   {
     for (int y = 0; y < Cup.H; y++)
     {
-      boolean isRowComplete = cup.isRowComplete(y);
+      boolean isRowComplete = game.cup.isRowComplete(y);
       for (int x = 0; x < Cup.W; x++)
-        if (cup.contents[y][x] > 0)
+        if (game.cup.contents[y][x] > 0)
         {
-          g.setColor(isRowComplete ? mergeColor : PALETTE[cup.contents[y][x]]);
+          g.setColor(isRowComplete ? mergeColor : PALETTE[game.cup.contents[y][x]]);
           g.fillRect(cx + x * SQUARE_SIZE, cy + y * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
         }
     }

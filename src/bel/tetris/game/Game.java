@@ -11,12 +11,13 @@ class Game extends Thread
   final Cup cup;
   private final Painter painter;
   int state = STATE_GAME;
+  boolean repaint = false;
   Figure currentFigure = new Figure();
   Figure nextFigure = new Figure();
   private int speed = 1;
   int level = 1, score = 0, prize = 0;
   String message = null;
-  private boolean isAlive = true;
+  boolean isAlive = true;
 
 
   Game(Tetris tetris)
@@ -35,13 +36,19 @@ class Game extends Thread
     {
       while (isAlive)
       {
-        painter.paint();
+        repaint = true;
+        if (state == STATE_PAUSED)
+        {
+          sleepMs(50);
+          continue;
+        }
+
         if (state == STATE_DROPPING)
           sleepMs(10);
         else
         {
           int delay = 1000 - speed * 450;
-          while (delay-- > 0 && state == STATE_GAME)    // dropping started or paused
+          while (delay-- > 0 && state == STATE_GAME && isAlive)    // dropping started or paused
             sleep(1);
         }
 
@@ -54,12 +61,12 @@ class Game extends Thread
         if (mergedRows > 0)
         {
           prize = 100 * mergedRows * mergedRows * level * (speed + 1);
-          painter.paint();
+          repaint = true;
           sleepMs(500);
           score += prize;
           prize = 0;
           cup.merge();
-          painter.paint();
+          repaint = true;
         }
 
         if (cup.isLevelComplete())
@@ -69,7 +76,7 @@ class Game extends Thread
         if (!cup.isFigurePositionValid(currentFigure))
         {
           state = STATE_GAME_OVER;
-          painter.paint();
+          repaint = true;
           finishGame();
         }
         else if (state == STATE_DROPPING)
@@ -92,7 +99,7 @@ class Game extends Thread
   void finishGame()
   {
 //    tetris.updateScores("", score, false);
-    setStop();
+    isAlive = false;
   }
 
   void pause()
@@ -130,22 +137,22 @@ class Game extends Thread
         break;
     }
 
-    painter.paint();
+    repaint = true;
   }
 
   private void nextLevel() throws Exception
   {
     currentFigure = null;
-    painter.paint();
+    repaint = true;
     sleepMs(500);
     prize = 5000 * level * (speed + 1);
     message = "Bonus";
-    painter.paint();
+    repaint = true;
     sleepMs(1000);    // TODO: increase to 3000
     score += prize;
     prize = 0;
     message = null;
-    painter.paint();
+    repaint = true;
     sleepMs(500);
     level++;
     if (cup.loadLevel(level))
@@ -155,7 +162,7 @@ class Game extends Thread
       state = STATE_NO_MORE_LEVELS;
 //              tetris.updateScores("", score, true);
     }
-    painter.paint();
+    repaint = true;
     sleepMs(2000);
     message = null;
   }
@@ -174,8 +181,4 @@ class Game extends Thread
     }
   }
 
-  void setStop()
-  {
-    isAlive = false;
-  }
 }

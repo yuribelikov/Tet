@@ -38,21 +38,6 @@ public class Tetris extends Frame implements IEventReceiver
 
       addKeyListener(eventListener);
       addWindowListener(eventListener);
-      addComponentListener(eventListener);
-
-      Font f = new Font("Dialog", 0, 12);
-      MenuBar MB = new MenuBar();
-      setMenuBar(MB);
-      Menu gameMenu = new Menu("Game");
-      MB.add(gameMenu);
-      gameMenu.setFont(f);
-
-      MenuItem newGameMI = new MenuItem("New Game");
-      newGameMI.setName("NewGame");
-      gameMenu.add(newGameMI);
-      newGameMI.setFont(f);
-      newGameMI.addActionListener(eventListener);
-      gameMenu.addSeparator();
 
       Dimension d = getToolkit().getScreenSize();
       int w = 800;
@@ -83,24 +68,19 @@ public class Tetris extends Frame implements IEventReceiver
       {
         KeyEvent keyEvt = (KeyEvent) evt.getData();
         String keyCode = KeyEvent.getKeyText(keyEvt.getKeyCode());
+        System.out.println("keyCode: " + keyCode);
 
         for (int n = 0; n < keys.length; n++)
           if (keys[n].equals(keyCode))
             game.move(actions[n]);
 
-        if (keyCode.equals("Pause"))
+        if (keyCode.equals("N"))
+          game = new Game(this);
+        else if (keyCode.equals("P"))
           game.pause();
       }
 
 // - - - - - - - - menu and window actions - - - - - - -
-      if (evt.getName().equals("ActionPerformed") && evt.getSourceName().equals("NewGame"))
-      {
-        if (game != null)
-          game.finishGame();
-
-        game = new Game(this);
-      }
-
       if (evt.getName().equals("WindowClosing"))
       {
         if (game != null)
@@ -122,7 +102,7 @@ public class Tetris extends Frame implements IEventReceiver
     try
     {
       if (game != null)
-        game.setStop();
+        game.isAlive = false;
       dispose();
       System.exit(0);
     }

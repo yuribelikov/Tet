@@ -2,7 +2,7 @@ package bel.tetris.game;
 
 import java.awt.*;
 
-class Painter
+class Painter extends Thread
 {
   private final Tetris tetris;
   private final Game game;
@@ -26,9 +26,31 @@ class Painter
     this.tetris = tetris;
     this.game = game;
     bgImage = tetris.createImage(tetris.getSize().width, tetris.getSize().height);
+    start();
   }
 
-  public synchronized void paint()
+  public void run()
+  {
+    System.out.println("Painter is started.");
+    try
+    {
+      while (game.isAlive)
+      {
+        while (!game.repaint)
+          sleep(1);
+
+        game.repaint = false;
+        paint();
+      }
+    }
+    catch (Exception e)
+    {
+      e.printStackTrace();
+    }
+    System.out.println("Painter is stopped.");
+  }
+
+  private void paint()
   {
     Graphics g = bgImage.getGraphics();
     g.setColor(Color.black);

@@ -41,14 +41,14 @@ class Figure
     return contents[rotation];
   }
 
-  void rotate()
+  void rotateBack()
   {
     rotation--;
     if (rotation < 0)
       rotation = 3;
   }
 
-  void rotateBack()
+  void rotate()
   {
     rotation++;
     if (rotation > 3)

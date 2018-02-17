@@ -4,7 +4,10 @@ import bel.tetris.event.CEvent;
 import lib.util.Log;
 
 import java.awt.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
 
 public class CCup extends Thread
 {
@@ -34,25 +37,6 @@ public class CCup extends Thread
     CupColor = new Color(150, 150, 255);
     InfoColor = new Color(220, 220, 240);
     InfoFont = new Font("Dialog", 1, 48);
-  }
-
-  private void loadLevel()
-  {
-    try
-    {
-      Contents = new int[H][W];
-      File f = new File(Level + ".lvl");
-      if (!f.exists()) return;
-
-      ObjectInputStream ois = new ObjectInputStream(new FileInputStream(f));
-      Contents = (int[][]) ois.readObject();
-      ois.close();
-
-    }
-    catch (Exception e)
-    {
-      Log.err(getClass().getName() + ".loadLevel() error : " + e);
-    }
   }
 
   private void mousePressed(int _X, int _Y, boolean _RightButton)
@@ -114,8 +98,8 @@ public class CCup extends Thread
         {
           g.setColor(Palette[n]);
           g.fillRect(x + PaletteLocation.x * SquareSize,
-                  y + (PaletteLocation.y + n) * SquareSize,
-                  SquareSize, SquareSize);
+          y + (PaletteLocation.y + n) * SquareSize,
+          SquareSize, SquareSize);
         }
         paintContents(g, x, y);
         paintText("" + Level, g, InfoFont, InfoColor, x + w + 50, y + 20);
@@ -144,8 +128,8 @@ public class CCup extends Thread
           if (Contents[y][x] > 0) _G.setColor(Palette[Contents[y][x]]);
           else _G.setColor(GridColor[gridSwitcher ? 0 : 1]);
           _G.fillRect(_X + x * SquareSize,
-                  _Y + y * SquareSize,
-                  SquareSize, SquareSize);
+          _Y + y * SquareSize,
+          SquareSize, SquareSize);
           gridSwitcher = !gridSwitcher;
         }
         gridSwitcher = !gridSwitcher;
@@ -246,14 +230,58 @@ public class CCup extends Thread
   {
     try
     {
-      ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(Level + ".lvl", false));
-      oos.writeObject(Contents);
-      oos.flush();
-      oos.close();
+      FileOutputStream fos = new FileOutputStream(Level + ".dat");
+      byte[] ba = new byte[W * H];
+      int i = 0;
+      for (int y = 0; y < H; y++)
+        for (int x = 0; x < W; x++)
+          ba[i++] = (byte) Contents[y][x];
+
+      fos.write(ba);
+      fos.flush();
+      fos.close();
     }
     catch (Exception e)
     {
       Log.err(getClass().getName() + ".saveLevel() error : " + e);
+    }
+  }
+
+  private void loadLevel()
+  {
+    try
+    {
+      Contents = new int[H][W];
+      File f = new File(Level + ".dat");
+      if (f.exists())
+      {
+        FileInputStream fis = new FileInputStream(f);
+        byte[] ba = new byte[W * H];
+        fis.read(ba);
+        fis.close();
+        int i = 0;
+        for (int y = 0; y < H; y++)
+          for (int x = 0; x < W; x++)
+            Contents[y][x] = ba[i++];
+
+        System.out.println(f + " has been read");
+      }
+      else
+      {
+        f = new File(Level + ".lvl");
+        if (!f.exists()) return;
+
+        ObjectInputStream ois = new ObjectInputStream(new FileInputStream(f));
+        Contents = (int[][]) ois.readObject();
+        ois.close();
+
+        System.out.println(f + " has been read (old)");
+      }
+
+    }
+    catch (Exception e)
+    {
+      Log.err(getClass().getName() + ".loadLevel() error : " + e);
     }
   }
 

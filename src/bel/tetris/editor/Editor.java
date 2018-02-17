@@ -80,7 +80,7 @@ public class Editor extends Frame implements IEventReceiver
     {
 //Log.LogEnabled=true;
       setBackground(new Color(210, 210, 210));
-      setTitle("�������� �������");
+      setTitle("Editor");
       setLayout(null);
       setResizable(false);
       EventListener = new CEventListener(this);
@@ -93,11 +93,11 @@ public class Editor extends Frame implements IEventReceiver
       Font f = new Font("Dialog", 0, 12);
       MB = new MenuBar();
       setMenuBar(MB);
-      FileMenu = new Menu("����");
+      FileMenu = new Menu("Menu");
       MB.add(FileMenu);
       FileMenu.setFont(f);
 
-      SelectMenu = new Menu("����� ������");
+      SelectMenu = new Menu("Select Level");
       FileMenu.add(SelectMenu);
       SelectMenu.setFont(f);
 
@@ -117,7 +117,7 @@ public class Editor extends Frame implements IEventReceiver
         }
       }
 
-      SaveMI = new MenuItem("���������");
+      SaveMI = new MenuItem("SaveLevel");
       SaveMI.setName("SaveLevel");
       FileMenu.add(SaveMI);
       SaveMI.setFont(f);
@@ -125,7 +125,7 @@ public class Editor extends Frame implements IEventReceiver
       SaveMI.addActionListener((ActionListener) EventListener);
       FileMenu.addSeparator();
 
-      ClearMI = new MenuItem("��������");
+      ClearMI = new MenuItem("ClearLevel");
       ClearMI.setName("ClearLevel");
       FileMenu.add(ClearMI);
       ClearMI.setFont(f);
@@ -133,7 +133,7 @@ public class Editor extends Frame implements IEventReceiver
       ClearMI.addActionListener((ActionListener) EventListener);
       FileMenu.addSeparator();
 
-      QuitMI = new MenuItem("�����");
+      QuitMI = new MenuItem("Quit");
       QuitMI.setName("Quit");
       FileMenu.add(QuitMI);
       QuitMI.setFont(f);
